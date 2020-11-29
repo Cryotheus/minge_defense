@@ -1,6 +1,7 @@
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
+util.AddNetworkString("minge_defense_minge_killed")
 
 --custom to entity
 ENT.CanAttack = true
@@ -23,6 +24,7 @@ ENT.HurtSounds = {
 	"vo/k_lab/kl_getoutrun01.wav"
 }
 
+--entity functions
 --so we can do stuff as a mod of the base without rewriting the base
 function ENT:AttackedPlayer(entity) end
 function ENT:AttackedByPlayer(damage_info) end
@@ -59,11 +61,22 @@ function ENT:OnContact(entity)
 end
 
 function ENT:OnInjured(damage_info)
-	self:EmitVOSound(self.HurtSounds, self.HurtSoundCount)
+	local damage = damage_info:GetDamage()
+	local health = self:Health()
 	
-	PrintMessage(HUD_PRINTTALK, "Attacked minge " .. tostring(self) .. " damage dealt is " .. damage_info:GetDamage() .. " old health remaining is " .. self:Health() .. ".")
+	if damage < health then self:EmitVOSound(self.HurtSounds, self.HurtSoundCount) end
 	
 	self:AttackedByPlayer(damage_info)
+end
+
+function ENT:OnKilled(damage_info)
+	net.Start("minge_defense_minge_killed")
+	net.WriteEntity(self)
+	net.Broadcast()
+	
+	self:BecomeRagdoll(damage_info)
+	
+	PrintMessage(HUD_PRINTTALK, "Killed a minge: " .. tostring(self))
 end
 
 function ENT:RunBehaviour()
@@ -87,4 +100,6 @@ function ENT:SetSpeed(speed)
 	self.Speed = speed
 end
 
+
+--post
 ENT:InitialLoad()

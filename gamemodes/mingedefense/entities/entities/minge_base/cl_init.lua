@@ -46,7 +46,7 @@ function ENT:Initialize()
 	minge.WeaponEntity = weapon_entity
 end
 
-function ENT:OnKilled(damage_info)
+function ENT:OnKilled()
 	local weapon_entity = self.WeaponEntity
 	
 	LocalPlayer():PrintMessage(HUD_PRINTTALK, "Minge killed")
@@ -71,10 +71,23 @@ function ENT:OnRemove()
 	if IsValid(weapon_entity) then weapon_entity:Remove() end
 end
 
+function ENT:Think()
+	
+end
+
+--incoming ent
+net.Receive("minge_defense_minge_killed", function()
+	local minge = net.ReadEntity()
+	
+	if IsValid(minge) then minge:OnKilled() end
+end)
+
+--list
 list.Set("NPC", "minge_base", {
 	Name = ENT.PrintName,
 	Class = "minge_base",
 	Category = "Minge Defense"
 })
 
+--post
 ENT:InitialLoad()

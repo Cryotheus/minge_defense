@@ -4,8 +4,8 @@ ENT.Spawnable = true
 ENT.Type = "nextbot"
 
 --custom to entity
---ENT.ShirtColor = color_white --no longer used
 
+--entity functions
 function ENT:InitialLoad() end
 
 function ENT:SharedInitialize()
