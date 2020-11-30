@@ -15,12 +15,14 @@
 --configurable variables
 local config = {
 	--files at gamemode root
-	cl_init = 4,	--0100
-	loader = 4,		--0100 this is some inception crap what the fuuuuuuck
-	shared = 4,		--0100
+	cl_init = 4,	--0 100
+	loader = 4,		--0 100 this is some inception crap what the fuuuuuuck
+	shared = 4,		--0 100
 	
 	--folders
-	player_class = {player_defender = 15},	--1111
+	global_functions = {client = 13},		--01 101
+	player_class = {player_defender = 23},	--10 111
+	ui = {hud = 21}							--10 101
 }
 
 --maximum amount of folders it may go down in the config tree

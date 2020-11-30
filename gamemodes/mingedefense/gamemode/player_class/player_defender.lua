@@ -12,6 +12,9 @@ function PLAYER:Loadout()
 	local ply = self.Player
 	
 	ply:RemoveAllItems()
+	
+	ply:Give("md_wrench")
+	ply:Give("md_pda")
 end
 
 player_manager.RegisterClass("player_defender", PLAYER, "player_default")

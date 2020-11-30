@@ -6,3 +6,6 @@ ENT.PrintName = "Minge Bag"
 
 --custom to entity
 ENT.ShirtVector = Vector(0.5, 0.5, 0.5)
+
+--post
+AddPrintNameToLanguage(ENT)

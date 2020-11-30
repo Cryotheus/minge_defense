@@ -1,4 +1,4 @@
 --part of entity structure
-ENT.Base = "minge_base"
+ENT.Base = "base_minge"
 ENT.Type = "nextbot"
 ENT.Spawnable = true

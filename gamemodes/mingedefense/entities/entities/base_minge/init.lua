@@ -17,6 +17,11 @@ ENT.AttackSounds = {
 	"vo/k_lab/kl_fiddlesticks.wav"
 }
 
+ENT.DeathSounds = {
+	"vo/k_lab/kl_fiddlesticks.wav",
+	"vo/k_lab/kl_fiddlesticks.wav"
+}
+
 ENT.HurtSounds = {
 	"vo/k_lab/kl_dearme.wav",
 	"vo/k_lab/kl_ahhhh.wav",
@@ -43,8 +48,17 @@ function ENT:Initialize()
 	self:SetSpeed(self.Speed)
 	self.loco:SetStepHeight(40) --seems like a lot, dontworryaboutit
 	
+	--recalculate them in case they are using a different list of sounds
 	self.AttackSoundCount = #self.AttackSounds
 	self.HurtSoundCount = #self.HurtSounds
+	self.DeathSoundCount = #self.DeathSounds
+	
+	--weapon
+	local weapon = ents.Create(self.WeaponClass)
+	weapon.Minge = self
+	self.WeaponEntity = weapon
+	
+	weapon:Spawn()
 end
 
 function ENT:OnContact(entity)
@@ -64,19 +78,26 @@ function ENT:OnInjured(damage_info)
 	local damage = damage_info:GetDamage()
 	local health = self:Health()
 	
+	--if they didn't die, play the hurt sound
 	if damage < health then self:EmitVOSound(self.HurtSounds, self.HurtSoundCount) end
 	
 	self:AttackedByPlayer(damage_info)
 end
 
 function ENT:OnKilled(damage_info)
+	PrintMessage(HUD_PRINTTALK, "Killed a minge: " .. tostring(self) .. ", " .. tostring(self.WeaponEntity))
+	
+	local damage_force = damage_info:GetDamageForce()
+	
 	net.Start("minge_defense_minge_killed")
 	net.WriteEntity(self)
+	net.WriteVector(damage_force)
 	net.Broadcast()
 	
-	self:BecomeRagdoll(damage_info)
+	self.WeaponEntity:Drop(damage_force)
 	
-	PrintMessage(HUD_PRINTTALK, "Killed a minge: " .. tostring(self))
+	self:BecomeRagdoll(damage_info)
+	self:EmitVOSound(self.DeathSounds, self.DeathSoundCount)
 end
 
 function ENT:RunBehaviour()
@@ -99,7 +120,3 @@ function ENT:SetSpeed(speed)
 	
 	self.Speed = speed
 end
-
-
---post
-ENT:InitialLoad()
