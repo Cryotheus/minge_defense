@@ -9,8 +9,18 @@ function GM:Initialize()
 end
 
 function GM:PlayerSpawn(ply, transiton)
+	ply:UnSpectate()
+	ply:SetupHands()
+	
 	player_manager.SetPlayerClass(ply, "player_defender")
-	BaseClass.PlayerSpawn(self, ply, transiton)
+	player_manager.OnPlayerSpawn(ply, transiton)
+	player_manager.RunClass(ply, "Spawn")
+	
+	--if we are in transition, do not touch player's weapons
+	if not transiton then hook.Call("PlayerLoadout", GAMEMODE, ply) end
+	
+	--stupid addons
+	hook.Call("PlayerSetModel", GAMEMODE, ply)
 end
 
 --we won't want them spawning crap with gm_spawn and stuff when the gamemode is ready, leaving it for debugging purpose as of right now

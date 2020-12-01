@@ -1,6 +1,6 @@
 --part of entity structure
 ENT.Base = "base_nextbot"
-ENT.Spawnable = true
+ENT.Spawnable = false
 ENT.Type = "nextbot"
 
 --custom to entity

@@ -13,8 +13,10 @@ function PLAYER:Loadout()
 	
 	ply:RemoveAllItems()
 	
+	ply:Give("gmod_tool")
 	ply:Give("md_wrench")
 	ply:Give("md_pda")
+	ply:Give("weapon_physgun")
 end
 
 player_manager.RegisterClass("player_defender", PLAYER, "player_default")

@@ -2,14 +2,13 @@ SWEP.AutoSwitchTo = true
 SWEP.Slot = 2
 SWEP.SlotPos = 0
 SWEP.Spawnable = true
-SWEP.ViewModel = "models/player/items/cyoa_pda/cyoa_pda.mdl"
-SWEP.ViewModelFOV = 70
+SWEP.ViewModel = "models/weapons/c_crowbar.mdl"
 SWEP.Weight = 2
-SWEP.WorldModel = "models/player/items/cyoa_pda/cyoa_pda.mdl"
+SWEP.WorldModel = "models/weapons/w_crowbar.mdl"
 
 SWEP.Primary = {
 	Ammo = "none",
-	Automatic = false,
+	Automatic = true,
 	ClipSize = -1,
 	DefaultClip = -1
 }
@@ -21,11 +20,49 @@ SWEP.Secondary = {
 	DefaultClip = -1
 }
 
-function SWEP:PrimaryAttack() end
+function SWEP:PrimaryAttack()
+	local act
+	local cur_time = CurTime()
+	local owner = self:GetOwner()
+	local trace = owner:GetEyeTrace()
+	
+	if trace.HitPos:Distance(owner:GetShootPos()) <= 75 then
+		act = ACT_VM_HITCENTER
+		
+		owner:FireBullets({
+				Num =	1,
+				Src =	self.Owner:GetShootPos(),
+				Dir =	self.Owner:GetAimVector(),
+				Spread =	Vector(0, 0, 0),
+				Tracer =	0,
+				Force =		1,
+				Damage =	25
+		})
+		
+		self:EmitSound("Weapon_Crowbar.Melee_Hit")
+	else
+		act = ACT_VM_MISSCENTER
+		
+		owner:SetAnimation(PLAYER_ATTACK1)
+		self:EmitSound("Weapon_Crowbar.Single")
+	end
+	
+	self:SendWeaponAnim(act)
+	self:SetNextPrimaryFire(cur_time + 0.45)
+	
+	self.NextIdleTime = CurTime() + self:SequenceDuration(self:SelectWeightedSequence(act))
+end
+
+
 function SWEP:Reload() end
 function SWEP:SecondaryAttack() end
 
-function SWEP:SharedInitialize()
-	--more here?
-	self:SetHoldType("melee")
+function SWEP:SharedInitialize() self:SetHoldType("melee") end
+
+function SWEP:Think()
+	if self.NextIdleTime and CurTime() > self.NextIdleTime then
+		self.NextIdleTime = nil
+		
+		self:SendWeaponAnim(ACT_VM_IDLE)
+	end
 end
