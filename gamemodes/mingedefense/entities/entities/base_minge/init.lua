@@ -150,12 +150,7 @@ function ENT:RunBehaviour()
 	
 	while true do
 		--what do we do when they are stuck? PANIC!
-		if self.loco:IsStuck() then
-			--[[ErrorNoHalt("Minge is stuck!")
-			
-			self:Remove()]]
-			
-			self:HandleStuck()
+		if self.loco:IsStuck() then self:HandleStuck()
 		else self:Behave() end
 		
 		coroutine.yield()
