@@ -33,13 +33,19 @@ function ENT:IsMingeWeapon() return true end
 function ENT:ParentToMinge()
 	local minge = self.Minge
 	
-	--set up the position on the minge
-	self:SetAngles(minge:LocalToWorldAngles(self.WeaponOffsetAngles))
-	self:SetSkin(self.WeaponSkin) --still don't know how to control color
-	self:SetPos(minge:LocalToWorld(self.WeaponOffsetPos))
-	
-	--finally, actually parent the model
-	self:SetParent(minge)
+	if IsValid(minge) then
+		--set up the position on the minge
+		self:SetAngles(minge:LocalToWorldAngles(self.WeaponOffsetAngles))
+		self:SetSkin(self.WeaponSkin) --still don't know how to control color
+		self:SetPos(minge:LocalToWorld(self.WeaponOffsetPos))
+		
+		--finally, actually parent the model
+		self:SetParent(minge)
+	elseif SERVER then
+		print(self, "had invalid parent", minge)
+		
+		self:Remove()
+	end
 end
 
 function ENT:SharedInitialize()

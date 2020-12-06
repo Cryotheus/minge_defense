@@ -1,20 +1,19 @@
 --Cryotheum#4096
 
 --we use bits here to determine if the function is run, up to 16 bits are supported here
---	0b000 = do nothing
---	0b001 = include on client
---	0b010 = include on server
---	0b100 = AddCSLuaFile
---anything above is the priority, lower values = higher priority
---priority 1 and below should be reserved for required and deathly important files
+--the first 3 digits are used to tell the loader what to do with the file
+--	0b000 = 0d0 = do nothing
+--	0b001 = 0d1 = include on client
+--	0b010 = 0d2 = include on server
+--	0b100 = 0d4 = AddCSLuaFile
+--anything above 7 (0b111) is the priority, lower values = higher priority
+--priority 1 and below should be reserved for required and deathly important files, or files that are just AddCSLuaFile'd
 --can't read binary? lol fuckin noob- half right face trainee give that keyboard some fuckin love
---daniel ocean
---stefan ocean
---sergei nohomo
 
 --configurable variables
+--this is the only table I will use trailing commas on, because it's faster with something that gets configured so often
 local config = {
-	--files at gamemode root
+	--files at gamemode root, these are not run by this loader
 	cl_init = 4,	--0 100
 	loader = 4,		--0 100 this is some inception crap what the fuuuuuuck
 	shared = 4,		--0 100
@@ -22,7 +21,22 @@ local config = {
 	--folders
 	global_functions = {client = 13},		--01 101
 	player_class = {player_defender = 23},	--10 111
-	ui = {hud = 21}							--10 101
+	
+	--folders with actual content
+	lang = {
+		client = 21,	--10 101
+		languages = {	--these will not be included by the loader, lang/client will include them as it needs their return value
+			en = 4,		--00 100
+			--fr = 4,	--00 100
+		}
+	},
+	
+	ui = {
+		colors = 21,	--010 101
+		fonts = 21,		--010 101
+		hud = 29,		--011 101
+		status = 37,	--100 101
+	},
 }
 
 --maximum amount of folders it may go down in the config tree
@@ -39,6 +53,8 @@ local load_functions = {
 	[4] = function(path) if SERVER then AddCSLuaFile(path) end end
 }
 
+local load_function_shift = table.Count(load_functions)
+
 --local functions
 --explores the config and populates load_order
 local function construct_order(config_table, depth, path)
@@ -53,7 +69,7 @@ local function construct_order(config_table, depth, path)
 		else
 			print(tabs .. key .. " = 0d" .. value)
 			
-			local priority = fl_bit_rshift(value, 3)
+			local priority = fl_bit_rshift(value, load_function_shift)
 			local script_path = path .. key
 			
 			if priority > highest_priority then highest_priority = priority end

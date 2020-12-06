@@ -2,9 +2,11 @@ SWEP.AutoSwitchTo = true
 SWEP.Slot = 2
 SWEP.SlotPos = 0
 SWEP.Spawnable = true
-SWEP.ViewModel = "models/weapons/c_crowbar.mdl"
+--SWEP.ViewModel = "models/minge_defense/wrench/cryotheum_reference.mdl" --"models/weapons/c_crowbar.mdl"
+--SWEP.ViewModel = "models/weapons/c_crowbar.mdl"
+SWEP.ViewModel = "models/minge_defense/weapons/c_wrench/c_wrench.mdl"
 SWEP.Weight = 2
-SWEP.WorldModel = "models/weapons/w_crowbar.mdl"
+SWEP.WorldModel = "models/weapons/w_models/w_wrench.mdl"
 
 SWEP.Primary = {
 	Ammo = "none",
@@ -35,7 +37,7 @@ function SWEP:PrimaryAttack()
 				Dir =	self.Owner:GetAimVector(),
 				Spread =	Vector(0, 0, 0),
 				Tracer =	0,
-				Force =		1,
+				Force =		5,
 				Damage =	25
 		})
 		
@@ -48,11 +50,10 @@ function SWEP:PrimaryAttack()
 	end
 	
 	self:SendWeaponAnim(act)
-	self:SetNextPrimaryFire(cur_time + 0.45)
+	self:SetNextPrimaryFire(cur_time + 0.8)
 	
 	self.NextIdleTime = CurTime() + self:SequenceDuration(self:SelectWeightedSequence(act))
 end
-
 
 function SWEP:Reload() end
 function SWEP:SecondaryAttack() end

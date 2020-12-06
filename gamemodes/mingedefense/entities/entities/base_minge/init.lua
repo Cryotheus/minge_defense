@@ -62,7 +62,7 @@ function ENT:BehaviourSetup()
 end
 
 function ENT:CreatePath() self.Path:Compute(self, self.TargetPos) end
-function ENT:EmitVOSound(choices, max_index) self:EmitSound(choices[math.random(max_index)], 90, math.random(190, 200), 1, CHAN_VOICE) end
+function ENT:EmitVOSound(choices, max_index) self:EmitSound(choices[math.random(max_index)], 60, math.random(190, 200), 1, CHAN_VOICE) end
 
 function ENT:HandleStuck()
 	local id = "minge_stuck_" .. self:EntIndex()

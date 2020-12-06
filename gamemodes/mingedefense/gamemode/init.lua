@@ -1,6 +1,25 @@
 DEFINE_BASECLASS("gamemode_sandbox")
 include("shared.lua")
 
+--temporary
+--[[resource.AddFile("materials/models/minge_defense/wrench/cryotheum_reference.vmt")
+resource.AddFile("models/minge_defense/wrench/cryotheum_reference.mdl")]]
+
+resource.AddFile("models/minge_defense/weapons/c_wrench/c_wrench.mdl")
+resource.AddFile("materials/models/minge_defense/weapons/c_wrench/c_wrench.vmt")
+resource.AddSingleFile("materials/models/minge_defense/weapons/c_wrench/light_warp.vtf")
+
+resource.AddSingleFile("materials/minge_defense/gui/icon24.png")
+resource.AddSingleFile("materials/minge_defense/gui/icon32.png")
+resource.AddSingleFile("materials/minge_defense/gui/icon512.png")
+resource.AddSingleFile("materials/minge_defense/gui/logo512.png")
+
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_fail.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_1.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_2.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_world.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_swing.wav")
+
 --gamemode functions
 function GM:Initialize()
 	print("Initialized gamemode by provided function. (Server)")

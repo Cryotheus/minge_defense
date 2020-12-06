@@ -1,0 +1,7 @@
+@include "base.fgd" 
+
+@PointClass size(0 -48 -27, 1 48 27) base(Targetname, Parentname, Origin, Angles) = mdinfo_wave_screen :
+	"Minge Defense wave info screen. Create a 3D2D VGUI panel with info about the active and upcoming wave."
+[
+
+]

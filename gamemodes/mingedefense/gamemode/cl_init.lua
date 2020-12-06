@@ -9,6 +9,7 @@ function GM:Initialize()
 end
 
 --we don't need an intricate spawn menu for this gamemode, convenient for debugging though, so it gets to stay for now
+--we will use PlayerBindPressed with +menu to make them swap to their last weapon
 --function GM:SpawnMenuEnabled() return false end
 
 --finish off with the rest of the scripts

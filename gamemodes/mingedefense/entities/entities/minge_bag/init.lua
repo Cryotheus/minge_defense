@@ -80,7 +80,7 @@ function ENT:CalmDown()
 end
 
 function ENT:OnOtherKilled(victim, damage_info)
-	if IsValid(victim) and victim.AggressWorth >= self.AggressWorthThreshold then
+	if IsValid(victim) and victim.IsMinge and victim.AggressWorth >= self.AggressWorthThreshold then
 		local attacker = damage_info:GetAttacker()
 		
 		if IsValid(attacker) and attacker:IsPlayer() then
