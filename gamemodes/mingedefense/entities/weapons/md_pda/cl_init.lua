@@ -83,7 +83,7 @@ function SWEP:PreDrawViewModel(entity, weapon, ply)
 			frame:SetDraggable(false)
 			frame:SetPos(100, 100)
 			frame:SetPaintedManually(true)
-			frame:SetSize(ScrW() - 200, ScrH() - 200)
+			frame:SetSize(ScrW() - 500, ScrH() - 500)
 			frame:SetTitle("Minge Defense PDA")
 			
 			--make sure they can deactivate the pda

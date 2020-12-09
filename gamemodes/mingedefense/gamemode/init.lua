@@ -15,10 +15,14 @@ resource.AddSingleFile("materials/minge_defense/gui/icon512.png")
 resource.AddSingleFile("materials/minge_defense/gui/logo512.png")
 
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_fail.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_flesh_1.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_flesh_2.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_flesh_3.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_flesh_4.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_1.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_2.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_world.wav")
-resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_swing.wav")
+resource.AddSingleFile("sound/minge_defense/weapons/wrench/swing.wav")
 
 --gamemode functions
 function GM:Initialize()

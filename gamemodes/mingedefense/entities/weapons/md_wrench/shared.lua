@@ -30,6 +30,7 @@ function SWEP:PrimaryAttack()
 	
 	if trace.HitPos:Distance(owner:GetShootPos()) <= 75 then
 		act = ACT_VM_HITCENTER
+		local entity = trace.Entity
 		
 		owner:FireBullets({
 				Num =	1,
@@ -41,12 +42,16 @@ function SWEP:PrimaryAttack()
 				Damage =	25
 		})
 		
-		self:EmitSound("Weapon_Crowbar.Melee_Hit")
+		if IsValid(entity) then
+			--random might not be a good idea
+			if entity.IsMinge then self:EmitSound("minge_defense/weapons/wrench/hit_flesh_" .. math.random(4) .. ".wav")
+			else self:EmitSound("minge_defense/weapons/wrench/hit_fail.wav") end
+		else self:EmitSound("minge_defense/weapons/wrench/hit_world.wav") end
 	else
 		act = ACT_VM_MISSCENTER
 		
 		owner:SetAnimation(PLAYER_ATTACK1)
-		self:EmitSound("Weapon_Crowbar.Single")
+		self:EmitSound("minge_defense/weapons/wrench/swing.wav")
 	end
 	
 	self:SendWeaponAnim(act)

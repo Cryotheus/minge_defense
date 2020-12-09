@@ -60,6 +60,8 @@ function ENT:SetPanelOffset(off_x, off_y, width, height, scale)
 	self:SetCalculatedRenderBounds(world_off_x, world_off_y, width, height, scale)
 end
 
+function ENT:SetPanelOffsetCentered(width, height, scale) self:SetPanelOffset(width * -0.5, height * -0.5, width, height, scale) end
+
 function ENT:SetCalculatedRenderBounds(off_x, off_y, width, height, scale)
 	local world_off_vector = Vector(0, off_x, -off_y)
 	
