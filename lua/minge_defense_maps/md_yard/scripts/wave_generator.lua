@@ -1,0 +1,2 @@
+--this is included server side by the loader if the map is md_yard
+--return a function for wave generation, if nil is returned it will default to what is in the config

@@ -1,0 +1,1 @@
+--this is run on the server if the map is md_yard

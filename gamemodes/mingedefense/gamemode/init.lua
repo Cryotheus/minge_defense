@@ -5,6 +5,9 @@ include("shared.lua")
 --[[resource.AddFile("materials/models/minge_defense/wrench/cryotheum_reference.vmt")
 resource.AddFile("models/minge_defense/wrench/cryotheum_reference.mdl")]]
 
+--heil franklin gothic heavy
+resource.AddSingleFile("resource/fonts/minge_defense.ttf")
+
 resource.AddFile("models/minge_defense/weapons/c_wrench/c_wrench.mdl")
 resource.AddFile("materials/models/minge_defense/weapons/c_wrench/c_wrench.vmt")
 resource.AddSingleFile("materials/models/minge_defense/weapons/c_wrench/light_warp.vtf")

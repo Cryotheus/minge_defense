@@ -21,6 +21,7 @@ local config = {
 	--folders
 	global_functions = {client = 13},		--01 101
 	player_class = {player_defender = 23},	--10 111
+	waves = {server = 18},					--10 010
 	
 	--folders with actual content
 	lang = {
@@ -54,6 +55,7 @@ local load_functions = {
 }
 
 local load_function_shift = table.Count(load_functions)
+local load_start_time = SysTime()
 
 --local functions
 --explores the config and populates load_order
@@ -104,9 +106,30 @@ local function load_by_order()
 	end
 end
 
+--loads the map scripts and wave generator stuff
+local function load_map()
+	
+end
+
 --post function setup
 print("\n\\\\\\ Minge Defense is starting. ///\n\nConstructing load order...")
 construct_order(config, 1, "")
 print("\nConstructed load order.\n\nLoading scripts by load order...")
 load_by_order()
+print("\nLoaded gamemode scripts.\n\nLoading map scripts...")
+load_map()
 print("\nLoaded scripts.\n\n/// All scripts loaded. \\\\\\\n")
+
+local load_finish_time = SysTime()
+local load_duration = load_finish_time - load_start_time
+local load_message = string.format("Gamemode file loading finished! Lasted %.2f seconds.", load_duration)
+
+--gamemode functions
+function GM:LoadFinished()
+	print(load_message)
+	
+	return load_start_time, load_finish_time, load_duration
+end
+
+--post gamemode funciton setup
+GM:LoadFinished()

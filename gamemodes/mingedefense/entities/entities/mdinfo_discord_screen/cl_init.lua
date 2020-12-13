@@ -23,25 +23,18 @@ function ENT:CreatePanel()
 		--panel:SetTitle("TEMP")
 		
 		function panel:Paint(width, height)
-			surface.SetDrawColor(color_background)
-			surface.DrawRect(0, 0, width, height)
+			--surface.SetDrawColor(color_background)
+			--surface.DrawRect(0, 0, width, height)
 		end
 	end
-	
-	--[[bull shit
-	do
-		panel:MakePopup()
-		
-		hook.Add("HUDPaint", "minge_defense_temp", function() if IsValid(panel) then panel:PaintManual() else hook.Remove("HUDPaint", "minge_defense_temp") end end)
-	end --]]
 	
 	do --html: discord container
 		local html_panel = vgui.Create("DHTML", panel)
 		
 		--TODO: allow custom discord URLs
 		html_panel:Dock(FILL)
-		html_panel:OpenURL("https://trello.com/b/jHVtAxUF/minge-defense")
-		--html_panel:SetHTML([=[<iframe src="https://discord.com/widget?id=785233414374686720&theme=dark" width="524" height="944" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>]=])
+		--html_panel:OpenURL("https://trello.com/b/jHVtAxUF/minge-defense")
+		html_panel:SetHTML([=[<iframe src="https://discord.com/widget?id=785233414374686720&theme=dark" width="540" height="960" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>]=])
 	end
 	
 	self:SetPanelOffsetCentered(panel_w, panel_h, self.PanelScale)

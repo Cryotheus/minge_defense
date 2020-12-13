@@ -1,5 +1,5 @@
 print(" !!!  status.lua loaded")
-
+--
 --locals
 local ply = LocalPlayer() --we set this here in case we are reloading the script, the player will be valid
 
@@ -81,15 +81,19 @@ function GM:HUDDrawStatus()
 		
 		fl_surface_SetTextPos(status_bar_x + (status_bar_w - width) * 0.5, status_bar_y)
 		
-		
-		
 		fl_surface_DrawText(text)
 	end
 end
 
 --hooks
 hook.Add("minge_defense_status", "OnScreenSizeChanged", function() calc_vars(ScrW(), ScrH()) end)
-hook.Add("minge_defense_status", "InitPostEntity", local_ply)
+hook.Add("minge_defense_status", "InitPostEntity", function()
+	ply = LocalPlayer()
+	
+	print("status ply", ply)
+	
+	hook.Remove("minge_defense_status", "InitPostEntity")
+end)
 
 --post
 calc_vars(ScrW(), ScrH())

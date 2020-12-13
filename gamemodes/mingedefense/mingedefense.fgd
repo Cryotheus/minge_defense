@@ -11,3 +11,16 @@
 [
 	discordurl(string) : "Discord URL" : : "WORK IN PROGRESS, DOES NOT FUNCTION CURRENTLY. Discord URL to used for inviting, this is not for the visual."
 ]
+
+@PointClass base(Targetname, Parentname, Origin, Angles) iconsprite("minge_defense/editor/mdinfo_path_target.vmt") = mdinfo_path_target :
+	"Minge Defense path point entity. The gamemode uses these to create paths for the minges to follow."
+[
+	mdgroupid(string) : "Group ID" : : "The group ID for using the path targets in a map config."
+	mduniqueid(string) : "Unique Identifier" : : "Unique name to identify this path target with using your map's config."
+]
+
+@PointClass size(-18 -18 0, 18 18 72) base(Targetname, Parentname, Origin, Angles) = mdinfo_minge_spawn :
+	"Minge Defense Minge spawn point. Minges will spawn at this point."
+[
+	mdgroupid(string) : "Group ID" : : "The group ID for using the spawn points in a map config."
+]
