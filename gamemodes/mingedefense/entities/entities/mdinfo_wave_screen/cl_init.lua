@@ -49,7 +49,7 @@ function ENT:CreatePanel()
 		--label:DockMargin(0, 12, 0, panel_w - 60)
 		label:DockMargin(0, 4, 0, 0)
 		label:SetContentAlignment(8)
-		label:SetFont("MingeDefenseUIStatus")
+		label:SetFont("MingeDefenseUIStatusLarge")
 		label:SetTextColor(color_white)
 		label:SetText(string.upper("MINGE DEFENSE INFO SCREEN TEST"))
 	end

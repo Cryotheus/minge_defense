@@ -3,7 +3,7 @@ include("shared.lua")
 --not yet functional, ENT:Draw doesnt get called, probably because its a point entity lol
 --part of entity structure
 ENT.PrintName = "Minge Defense Wave Info Screen"
-ENT.RenderGroup = RENDERGROUP_OPAQUE
+ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 --custom to entity
 ENT.PanelScale = 0.2
@@ -27,7 +27,7 @@ function ENT:CreatePanel()
 	self.Panel = frame
 end
 
-function ENT:Draw()
+function ENT:DrawTranslucent()
 	if IsValid(self.Panel) then
 		cam.Start3D2D(self:LocalToWorld(Vector(1, self.WorldOffsetX, self.WorldOffsetY)), self:LocalToWorldAngles(panel_3d2d_local_angle), self.PanelScale)
 		self.Panel:PaintManual()
@@ -67,3 +67,14 @@ function ENT:SetCalculatedRenderBounds(off_x, off_y, width, height, scale)
 	
 	self:SetRenderBounds(world_off_vector, world_off_vector + Vector(1, width * scale, height * scale))
 end
+
+--hooks
+hook.Add("LocalPlayerInitialized", "minge_defense_screen", function(local_ply)
+	hook.Add("KeyPress", "minge_defense_screen", function(ply, key)
+		if ply == local_ply and key == IN_USE then
+			print("in use!")
+		end
+	end)
+end)
+
+hook.Add("OnReloaded", "minge_defense_screen", function() hook.GetTable().LocalPlayerInitialized.minge_defense_screen(LocalPlayer()) end)

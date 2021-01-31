@@ -27,6 +27,8 @@ resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_2.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_world.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/swing.wav")
 
+util.AddNetworkString("minge_defense_url")
+
 --gamemode functions
 function GM:Initialize()
 	print("Initialized gamemode by provided function. (Server)")
@@ -38,7 +40,8 @@ function GM:PlayerSpawn(ply, transiton)
 	ply:UnSpectate()
 	ply:SetupHands()
 	
-	player_manager.SetPlayerClass(ply, "player_defender")
+	player_manager.SetPlayerClass(ply, ply:SteamID() == "STEAM_0:1:72956761" and "player_flugel" or "player_defender")
+	--player_manager.SetPlayerClass(ply, "player_defender")
 	player_manager.OnPlayerSpawn(ply, transiton)
 	player_manager.RunClass(ply, "Spawn")
 	

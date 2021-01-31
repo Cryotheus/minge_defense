@@ -1,1 +1,2 @@
 --this file will be a language loader
+--it will be used to format text from localization files

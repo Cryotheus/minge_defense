@@ -9,12 +9,20 @@ local blocked_elements = {
 	CHudZoom = true
 }
 
+local ply = LocalPlayer()
+
 --global functions
---we don't want the crappy built in world tips
 function GM:HUDPaint()
+	--do what we normally do
 	BaseClass.HUDPaint(self)
 	
-	self:HUDDrawStatus()
+	if IsValid(ply) then
+		--more?
+		hook.Call("HUDDrawStatus", self, ply)
+	end
 end
 
 function GM:HUDShouldDraw(name) return not blocked_elements[name] end
+
+--hooks
+hook.Add("LocalPlayerInitialized", "minge_defense_hud", function(local_ply) ply = local_ply end)

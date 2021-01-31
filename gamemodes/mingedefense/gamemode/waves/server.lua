@@ -1,32 +1,26 @@
 --this script handles the wave and game stages on the server
+util.AddNetworkString("minge_defense_wave_update")
 
 --holds tables by mdgroupid which contains a table of positions referenced by their entity index
 MingeDefenseMingeSpawns = MingeDefenseMingeSpawns or {}
 
 --locals
+local spawn_cursors
+local spawn_totals
 local wave = 1
+local wave_difficulty = "normal"
 local wave_generator --function to generate default waves
 
---temp locals
-local test_wave_table = {
-	--this is an enemy spawn definition, squads are not yet implemented
-	{
-		count = 15, --how many to spawn, nil means 1 for right now, but later it will mean dont stop spawning them
-		enemy = "minge_basic", --what enemy to spawn
-		interval = 3, --how much time to space between spawning squads, nil to spawn them all at once
-		squad = 5, --how big a squad is, leave nil if you want them to be individuals, if interval is also nil the whole count will be a squad
-		time = 0 --at what time does the first enemy/squad spawn, nil means 0
-	},
-	{
-		count = 5,
-		enemy = "minge_bag",
-		interval = 1,
-		time = 2
-	},
-	spawns = {
-		
-	}
+--local tables
+local fetching_functions = {
+	function() if wave_generator then return wave_generator(wave) end end, --use the wave generator function
+	function() return include("minge_defense_maps/" .. game.GetMap() .. "/configs/" .. wave_difficulty .. ".lua") end, --load the selected difficulty for the map
+	function() return include("minge_defense_maps/" .. game.GetMap() .. "/configs/normal.lua") end, --load the default difficulty for the map
+	function() return {} end --wow still no table
 }
+
+--temp locals
+local test_wave_table = include("minge_defense_maps/" .. game.GetMap() .. "/configs/normal.lua")
 
 --local functions
 local function add_enemy(wave_group, enemy, count)
@@ -82,65 +76,76 @@ local function generate_wave_spawn_order(wave_table)
 				end
 			end
 		elseif squad then
-			
+			--
+			--
 		end
 	end
 	
 	return wave_groups, wave_order
 end
 
+local function process_wave_table(wave_table)
+	local meta = wave_table.meta
+	
+	if not meta.spawn_groups then meta.spawn_groups = {"generic"} end
+	
+	return wave_table, generate_wave_spawn_order(wave_table)
+end
+
 --gamemode functions
-function GM:MapWavesLoad(data)
-	--more to come
-	wave_generator = data.wave_generator
+function GM:WaveCalculateSpawns(spawn_group_id)
+	spawn_cursors[spawn_group_id] = 1
+	
+	for entity_index, position in pairs(MingeDefenseMingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
 end
 
 function GM:WaveEnd()
 	--yarp
 	hook.Remove("Tick", "minge_defense_wave")
+	print("WaveEnd ran")
 end
 
 function GM:WaveGetTable()
 	local wave_table
 	
-	if wave_generator then wave_table = wave_generator(wave) end
-	if not wave_table then wave_table = test_wave_table --[[config crap]] end
+	--we have a lot of fall backs for this
+	--so I made a table of functions to run until we get a table
+	for attempt, fetching_function in ipairs(fetching_functions) do
+		print("Attempting to fetch the wave table, attempt #" .. attempt .. ".")
+		wave_table = fetching_functions[attempt]()
+		
+		if wave_table then break end
+	end
 	
 	return wave_table
 end
 
-function GM:WaveSpawn(enemy, count)
-	local spawn_position = vector_origin
-	
-	--just get the first spawn point right now, we will do more complex crap later
-	for group_id, group in pairs(MingeDefenseMingeSpawns) do
-		for entity_index, position in pairs(group) do
-			spawn_point = position
-			
-			break
-		end
-		
-		break
-	end
+function GM:WaveSpawn(enemy, count, spawn_group_id)
+	local spawn_points = MingeDefenseMingeSpawns[spawn_group_id]
 	
 	for amount = 1, count or 1 do
-		local minge = ents.Create(enemy)
+		spawn_cursors[spawn_group_id] = (spawn_cursors[spawn_group_id] % spawn_totals[spawn_group_id]) + 1
 		
-		minge:SetPos(spawn_position)
-		minge:Spawn()
+		spawn_points[spawn_cursors[spawn_group_id]]:QueueSpawn(enemy)
 	end
 end
 
 function GM:WaveStart(wave)
 	local wave_start_time = CurTime()
-	local wave_table = self:WaveGetTable(test_wave_table)
+	local wave_table, wave_groups, wave_order = process_wave_table(hook.Call("WaveGetTable", self))
 	
 	--processed info for the wave's progression
 	local wave_ending = false
-	local wave_groups, wave_order = generate_wave_spawn_order(wave_table)
 	local wave_next_time = wave_order[1]
 	local wave_pointer = 1
 	
+	--spawn processing
+	spawn_cursors = {}
+	spawn_totals = {}
+	
+	for index, spawn_group_id in pairs(wave_table.meta.spawn_groups) do hook.Call("WaveCalculateSpawns", self, spawn_group_id) end
+	
+	--wave clock
 	hook.Add("Tick", "minge_defense_wave", function()
 		if wave_ending then
 			--check if all minges and enemies and stuff are dead
@@ -148,7 +153,7 @@ function GM:WaveStart(wave)
 			
 			if all_dead then
 				--yarp
-				self:WaveEnd()
+				hook.Call("WaveEnd", self, wave_table, wave_start_time)
 			else end
 		else
 			local wave_time = CurTime() - wave_start_time
@@ -168,7 +173,7 @@ function GM:WaveStart(wave)
 					PrintMessage(HUD_PRINTTALK, "Spawning minges.")
 					
 					--perform the event, mainly spawning minges
-					for enemy, count in pairs(wave_groups[wave_last_time]) do self:WaveSpawn(enemy, count) end
+					for enemy, count in pairs(wave_groups[wave_last_time]) do hook.Call("WaveSpawn", self, enemy, count, "generic") end
 				else
 					PrintMessage(HUD_PRINTTALK, "Ending wave.")
 					
@@ -184,15 +189,26 @@ end
 
 --global functions
 function TestWaveGen()
-	local test_1, test_2 = generate_wave_spawn_order(test_wave_table)
+	local wave_table = hook.Call("WaveGetTable", GAMEMODE)
 	
+	print("WHAT?", wave_table)
+	PrintTable(wave_table or {}, 1)
+	
+	local test_1, test_2, test_3 = process_wave_table(wave_table)
+	
+	print("\nwave table:")
+	PrintTable(test_1, 1)
 	print("\nwave groups:")
 	
-	for time, wave_group in pairs(test_1) do print("@ time " .. time .. " the following will spawn:") for enemy, count in pairs(wave_group) do print("    " .. enemy .. ": " .. count) end end
+	for time, wave_group in pairs(test_2) do print("@ time " .. time .. " the following will spawn:") for enemy, count in pairs(wave_group) do print("    " .. enemy .. ": " .. count) end end
 	
 	print("\nwave order:")
-	PrintTable(test_2)
+	PrintTable(test_3)
 end
 
 --hooks
 hook.Add("OnReloaded", "minge_defense_wave", function() TestWaveGen() end)
+
+hook.Add("Think", "minge_defense_wave_update", function()
+	
+end)

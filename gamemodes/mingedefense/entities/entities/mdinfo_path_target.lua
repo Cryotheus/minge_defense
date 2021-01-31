@@ -9,8 +9,8 @@ ENT.Keys = {}
 
 --entity functions
 function ENT:Initialize()
-	print("Minge path target initialized!", self)
-	PrintTable(self.Keys, 1)
+	--do some stuff here
+	--like take the mduniqueid or mdgroupid and plug it into a global table
 end
 
 function ENT:KeyValue(key, value)
@@ -18,4 +18,14 @@ function ENT:KeyValue(key, value)
 	
 	--mdgroupid
 	--mduniqueid
+	
+	--example PrintTable of keys
+	--[[
+		Minge path target initialized!  Entity [57][mdinfo_path_target]
+			angles =		0 0 0
+			classname =		mdinfo_path_target
+			hammerid =		8109
+			mduniqueid =	cat_walk
+			origin =		-960 960 128
+	]]
 end

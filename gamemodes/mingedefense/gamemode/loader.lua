@@ -19,17 +19,13 @@ local config = {
 	shared = 4,		--0 100
 	
 	--folders
-	global_functions = {client = 13},		--01 101
-	player_class = {player_defender = 23},	--10 111
-	waves = {server = 18},					--10 010
+	global_functions = {client = 13},	--01 101
+	lang = {client = 21},				--10 101
 	
 	--folders with actual content
-	lang = {
-		client = 21,	--10 101
-		languages = {	--these will not be included by the loader, lang/client will include them as it needs their return value
-			en = 4,		--00 100
-			--fr = 4,	--00 100
-		}
+	player_class = {
+		player_defender = 23,	--10 111
+		player_flugel = 31,		--11 111
 	},
 	
 	ui = {
@@ -37,7 +33,13 @@ local config = {
 		fonts = 21,		--010 101
 		hud = 29,		--011 101
 		status = 37,	--100 101
+		target_id = 29,	--011 101
 	},
+	
+	waves = {
+		client = 21,	--10 101
+		server = 18		--10 010
+	}
 }
 
 --maximum amount of folders it may go down in the config tree
@@ -55,7 +57,6 @@ local load_functions = {
 }
 
 local load_function_shift = table.Count(load_functions)
-local load_start_time = SysTime()
 
 --local functions
 --explores the config and populates load_order
@@ -112,24 +113,34 @@ local function load_map()
 end
 
 --post function setup
-print("\n\\\\\\ Minge Defense is starting. ///\n\nConstructing load order...")
-construct_order(config, 1, "")
-print("\nConstructed load order.\n\nLoading scripts by load order...")
-load_by_order()
-print("\nLoaded gamemode scripts.\n\nLoading map scripts...")
-load_map()
-print("\nLoaded scripts.\n\n/// All scripts loaded. \\\\\\\n")
-
-local load_finish_time = SysTime()
-local load_duration = load_finish_time - load_start_time
-local load_message = string.format("Gamemode file loading finished! Lasted %.2f seconds.", load_duration)
-
---gamemode functions
-function GM:LoadFinished()
-	print(load_message)
+function GM:LoadScripts()
+	local load_start_time = SysTime()
 	
-	return load_start_time, load_finish_time, load_duration
+	print("\n\\\\\\ Minge Defense is starting. ///\n\nConstructing load order...")
+	construct_order(config, 1, "")
+	print("\nConstructed load order.\n\nLoading scripts by load order...")
+	load_by_order()
+	print("\nLoaded gamemode scripts.\n\nLoading map scripts...")
+	load_map()
+	print("\nLoaded scripts.\n\n/// All scripts loaded. \\\\\\\n")
+	
+	local load_finish_time = SysTime()
+	local load_duration = load_finish_time - load_start_time
+	local load_message = string.format("Gamemode file loading finished! Lasted %.2f seconds.", load_duration)
+	
+	hook.Call("LoadFinished", self, load_start_time, load_finish_time, load_duration, load_message)
 end
 
+--gamemode functions
+function GM:LoadFinished(load_start_time, load_finish_time, load_duration, load_message)
+	print(load_message)
+	
+	return load_start_time, load_finish_time, load_duration, load_message
+end
+
+--concommand
+concommand.Add("md_reload", function(ply, command, arguments, arguments_string) if not IsValid(ply) or ply == LocalPlayer() then hook.Call("LoadScripts", GM) end
+end, nil, "nil")
+
 --post gamemode funciton setup
-GM:LoadFinished()
+hook.Call("LoadScripts", GM)

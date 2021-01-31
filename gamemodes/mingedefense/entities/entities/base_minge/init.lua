@@ -65,6 +65,7 @@ function ENT:CreatePath() self.Path:Compute(self, self.TargetPos) end
 function ENT:EmitVOSound(choices, max_index) self:EmitSound(choices[math.random(max_index)], 60, math.random(190, 200), 1, CHAN_VOICE) end
 
 function ENT:HandleStuck()
+	--we should make a better anti stuck, like make them solid when they are no longer inside something, and try to make them get out of what ever they are stuck in by pushing them away
 	local id = "minge_stuck_" .. self:EntIndex()
 	
 	self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
@@ -77,7 +78,7 @@ end
 
 function ENT:Initialize()
 	--run the initialize that is shared, in shared.lua
-	self:SharedInitialize()
+	self:SetModel("models/player/kleiner.mdl")
 	
 	--some settings
 	self:SetHealth(self.StartHealth)
@@ -150,7 +151,10 @@ function ENT:RunBehaviour()
 	
 	while true do
 		--what do we do when they are stuck? PANIC!
-		if self.loco:IsStuck() then self:HandleStuck()
+		if self.loco:IsStuck() then
+			--are they really stuck? or are we being dumb?
+			if self:GetVelocity():LengthSqr() > 1 then self.loco:ClearStuck()
+			else self:HandleStuck() end
 		else self:Behave() end
 		
 		coroutine.yield()
