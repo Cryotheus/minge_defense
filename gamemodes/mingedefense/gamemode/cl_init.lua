@@ -9,9 +9,14 @@ function GM:Initialize()
 end
 
 function GM:InitPostEntity()
-	print("InitPostEntity ran, calling LocalPlayerInitialized.")
+	for i = 1, 20 do print("InitPostEntity ran, luckily.") end
 	
 	hook.Call("LocalPlayerInitialized", self, LocalPlayer())
+	
+	timer.Simple(5, function()
+		--we need to delay it I guess
+		hook.Call("WaveScanSENTS", self)
+	end)
 end
 
 function GM:LocalPlayerInitialized(ply)

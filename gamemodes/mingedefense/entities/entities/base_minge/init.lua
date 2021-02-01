@@ -12,6 +12,7 @@ ENT.DamageCooldown = 0.25
 ENT.PathPatience = 4 --how many seconds do we wait before recomputing the path
 ENT.Speed = 80
 ENT.StartHealth = 50
+ENT.Stuck = false
 ENT.TargetPos = Vector(1920, 0, 696.031250) --just to test for now
 
 ENT.AttackSounds = {
@@ -70,8 +71,10 @@ function ENT:HandleStuck()
 	
 	self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 	
-	if timer.Exists(id) then timer.Adjust(id, 5)
-	else timer.Create(id, 5, 1, function() if IsValid(self) then self:SetSolidMask(MASK_NPCSOLID) end end) end
+	--if timer.Exists(id) then timer.Adjust(id, 5)
+	--else timer.Create(id, 5, 1, function() if IsValid(self) then self:SetSolidMask(MASK_NPCSOLID) end end) end
+	
+	self.Stuck = true
 	
 	self.loco:ClearStuck()
 end
@@ -169,4 +172,28 @@ function ENT:SetSpeed(speed)
 	locomotive:SetDesiredSpeed(speed)
 	
 	self.Speed = speed
+end
+
+function ENT:Think()
+	if self.Stuck then
+		local filter = self:GetChildren()
+		
+		table.insert(filter, self)
+		
+		local trace = util.TraceHull({
+			endpos = self:GetPos() + Vector(0, 0, 72),
+			filter = filter,
+			ignoreworld = true,
+			mask = MASK_NPCSOLID,
+			maxs = Vector(13, 13, 0),
+			mins = Vector(-13, -13, 0),
+			start = self:GetPos(),
+		})
+		
+		if not IsValid(trace.Entity) then
+			self:SetSolidMask(MASK_NPCSOLID)
+			
+			self.Stuck = false
+		end
+	end
 end

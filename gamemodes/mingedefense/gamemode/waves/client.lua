@@ -1,22 +1,13 @@
 MingeDefenseMingeSENTS = MingeDefenseMingeSENTS or {}
+MingeDefenseMingeIcons = MingeDefenseMingeIcons or {}
 
-local render_size = 1024
-local render_name = "minge_defense_icon_generator"
-local render_target = GetRenderTargetEx(render_name, render_size, render_size, RT_SIZE_OFFSCREEN, MATERIAL_RT_DEPTH_SEPARATE, 256, 0, IMAGE_FORMAT_BGRA8888)
-local test_mat = CreateMaterial(render_name, "UnlitGeneric", {
-	["$basetexture"] = "models/weapons/v_toolgun/screen_bg",
-	["$translucent"] = 1, --we could also try $alphatest as it makes the model transparent not translucent
-	["$vertexcolor"] = 1
-})
+local render_size = 512
 
---test_mat:SetTexture("$basetexture", render_target)
-
-function GM:WaveGenerateIcon(ENT, debug_draw)
+function GM:WaveGenerateIcon(class, ENT, sobel, sobel_passes, debug_draw)
 	local camera_data = ENT.IconCamera
+	local existing_material = MingeDefenseMingeIcons[class]
 	local lighting = camera_data.AutoLighting
-	local lighting_enabled = lighting and true or false
-	
-	--render.ClearRenderTarget(render_target, Color(0, 0, 0, 0))
+	local render_target = GetRenderTargetEx("mdiconrt_" .. class, render_size, render_size, RT_SIZE_OFFSCREEN, MATERIAL_RT_DEPTH_SEPARATE, 256, 0, IMAGE_FORMAT_BGRA8888)
 	
 	render.PushRenderTarget(render_target)
 		--the depth buffer NEEDS to be cleared, but the stencil buffer probably doesn't matter
@@ -24,76 +15,100 @@ function GM:WaveGenerateIcon(ENT, debug_draw)
 		
 		cam.Start3D(camera_data.Position, camera_data.Angles or (camera_data.TargetPosition - camera_data.Position):Angle(), camera_data.FOV, 0, 0, ScrW(), ScrH(), camera_data.Near, camera_data.Far)
 			--automtically light up the entity with good settings
-			if lighting_enabled then
+			if lighting then
 				local lighting_side = lighting.Sides or {}
 				
 				render.SuppressEngineLighting(true)
-				render.SetLightingOrigin(lighting.Position)
+				render.SetLightingOrigin(lighting.Position or vector_origin)
 				
 				if lighting.Default then render.ResetModelLighting(unpack(lighting.Default))
 				else render.ResetModelLighting(1, 1, 1) end
-				
-				for index = 0, 5 do
-					local sides = lighting_side[index + 1]
-					
-					if sides then render.SetModelLighting(index, unpack(sides))
-					else render.SetModelLighting(index, 1, 1, 1) end
-				end
 			end
 			
 			ENT:DrawIconModels()
 			
+			if ENT.DrawIconWeaponModels then ENT:DrawIconWeaponModels() end
+			if sobel and sobel >= 0 then for pass = 1, sobel_passes or 1 do DrawSobel(sobel) end end
+			
 			render.SuppressEngineLighting(false)
 		cam.End3D()
-		
-		cam.Start2D()
-			--DrawSobel(0.5)
-			
-			surface.SetDrawColor(255, 0, 0)
-			surface.DrawRect(math.random(0, 200), math.random(0, 200), 50, 50)
-		cam.End2D()
 	render.PopRenderTarget()
 	
-	test_mat:SetTexture("$basetexture", render_target)
-	
-	if debug_draw then --debug
-		local debug_name = "minge_defense_" .. SysTime() .. "_" .. math.random(-math.huge, math.huge) 
+	if existing_material then
+		existing_material:SetTexture("$basetexture", render_target)
 		
-		print("Debug name is: " .. debug_name)
-		
-		hook.Add("HUDPaint", debug_name, function()
-			surface.SetDrawColor(255, 1, 1, 64)
-			surface.DrawRect(0, 0, render_size, render_size)
-			
-			surface.SetDrawColor(255, 255, 255)
-			surface.SetMaterial(test_mat)
-			surface.DrawTexturedRect(0, 0, render_size, render_size)
-		end)
-		
-		timer.Create(debug_name, 3, 1, function() hook.Remove("HUDPaint", debug_name) end)
+		return existing_material
+	else
+		return CreateMaterial("mdicon_" .. class, "UnlitGeneric", {
+			["$basetexture"] = render_target:GetName(),
+			["$translucent"] = 1, --we could also try $alphatest as it makes the model transparent not translucent
+			["$vertexcolor"] = 1
+		})
 	end
 end
 
 function GM:WaveScanSENTS()
-	local first = true
-	
 	for class, data in pairs(scripted_ents.GetList()) do
-		local ENT = data.t
+		local ENT = scripted_ents.GetStored(class)
+		local overrides = data.t
 		
 		if ENT.IconCamera then
-			print("We found an entity with an IconCamera!", class)
-			--PrintTable(ENT, 1)
-			
-			MingeDefenseMingeSENTS[class] = ENT.IconCamera
-			
 			--debugging! only do the first one right now
-			if first then
-				first = false
-				
-				hook.Call("WaveGenerateIcon", GM, ENT, false)
-			end
+			local material = hook.Call("WaveGenerateIcon", self, class, ENT, 0.99, 2)
+			
+			print("material generated!", material, material:GetName())
+			
+			ENT.IconOverride = material:GetName() --materials/entities/<ClassName>.png
+			ENT.IconMaterial = material
+			MingeDefenseMingeIcons[class] = material
+			MingeDefenseMingeSENTS[class] = ENT
 		elseif ENT.IsMinge then MingeDefenseMingeSENTS[class] = true end
 	end
 end
 
-hook.Call("WaveScanSENTS", GM)
+function GM:WaveTestIcons()
+	local frame = vgui.Create("DFrame")
+	
+	frame:SetSize(1038, 1062)
+	frame:SetTitle("Icon test with " .. table.Count(MingeDefenseMingeIcons) .. " icons")
+	
+	local layout = vgui.Create("DIconLayout", frame)
+	
+	layout:Dock(FILL)
+	layout:SetSpaceX(4, 4)
+	layout:SetSpaceY(4, 4)
+	
+	for class, icon in pairs(MingeDefenseMingeIcons) do
+		local test = layout:Add("DPanel")
+		
+		function test:Paint(width, height)
+			surface.SetDrawColor(255, 255, 255)
+			surface.SetMaterial(icon)
+			surface.DrawTexturedRect(0, 0, width, height)
+			
+			surface.SetDrawColor(0, 0, 0, 64)
+			surface.DrawRect(0, 0, width, height)
+		end
+		
+		test:SetSize(512, 512)
+	end
+	
+	frame:Center()
+	frame:MakePopup()
+end
+
+--concommands
+concommand.Add("gm_showspare2", function(command, ply, arguments, arguments_string)
+	local state = tobool(arguments[1])
+	
+	net.Start("minge_defense_wave_ready")
+	net.WriteBool()
+	net.SendToServer()
+end, nil, "Mark yourself as ready for the next wave.")
+
+--net
+net.Receive("minge_defense_wave_ready", function()
+	local plys = net.ReadTable()
+	
+	--do stuff like update the hud... maybe make a file in the ui folder
+end)

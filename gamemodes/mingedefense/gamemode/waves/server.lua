@@ -1,4 +1,5 @@
 --this script handles the wave and game stages on the server
+util.AddNetworkString("minge_defense_wave_ready")
 util.AddNetworkString("minge_defense_wave_update")
 
 --holds tables by mdgroupid which contains a table of positions referenced by their entity index
@@ -95,8 +96,9 @@ end
 --gamemode functions
 function GM:WaveCalculateSpawns(spawn_group_id)
 	spawn_cursors[spawn_group_id] = 1
+	spawn_totals[spawn_group_id] = 0
 	
-	for entity_index, position in pairs(MingeDefenseMingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
+	for index, entity in pairs(MingeDefenseMingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
 end
 
 function GM:WaveEnd()
@@ -123,8 +125,13 @@ end
 function GM:WaveSpawn(enemy, count, spawn_group_id)
 	local spawn_points = MingeDefenseMingeSpawns[spawn_group_id]
 	
-	for amount = 1, count or 1 do
+	for index = 1, count or 1 do
 		spawn_cursors[spawn_group_id] = (spawn_cursors[spawn_group_id] % spawn_totals[spawn_group_id]) + 1
+		
+		print(spawn_cursors) --table
+		print(spawn_cursors[spawn_group_id]) --number
+		print(spawn_points) --table
+		print(spawn_points[spawn_cursors[spawn_group_id]]) --nil
 		
 		spawn_points[spawn_cursors[spawn_group_id]]:QueueSpawn(enemy)
 	end

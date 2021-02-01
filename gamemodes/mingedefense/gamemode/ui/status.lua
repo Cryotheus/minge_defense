@@ -28,6 +28,8 @@ local pi = math.pi
 	local fl_surface = nil
 
 ----calculated variables
+	local error_px_half = 0.5 / 32 -- half pixel anticorrection for surface.DrawTexturedRectUV
+	local error_px_div = 1 - error_px_half * 2
 	local margin = 8
 	local money_h
 	local money_w
@@ -71,7 +73,22 @@ local function calc_vars(scr_w, scr_h)
 	money_h = status_h
 end
 
+local function draw_uv_texture(x, y, width, height, start_u, start_v, end_u, end_v)
+	fl_surface_DrawTexturedRectUV(
+		x,
+		y,
+		width,
+		height,
+		
+		(start_u - error_px_half) / error_px_div,
+		(start_v - error_px_half) / error_px_div,
+		(end_u - error_px_half) / error_px_div,
+		(end_v - error_px_half) / error_px_div
+	)
+end
+
 --gamemode functions
+--TODO: cache text displayed so we dont keep translating health and armor to text
 function GM:HUDDrawStatus(ply)
 	--later, just make this hook start from InitPostEntity
 	local armor = ply:Armor()
@@ -106,14 +123,14 @@ function GM:HUDDrawStatus(ply)
 		
 		fl_surface_SetDrawColor(pulse_rg, pulse_rg, 255, pulse * 68 + 104)
 		fl_surface_SetMaterial(material_shield)
-		fl_surface_DrawTexturedRectUV(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
+		draw_uv_texture(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
 		
 		pulse = fl_math_sin(real_time * 4 + pi)
 		pulse_rg = pulse * 20 + 215
-		scroll = scroll + status_armor_bar_w * 0.2
+		scroll = scroll + 0.25
 		
 		fl_surface_SetDrawColor(pulse_rg, pulse_rg, 255, pulse * 68 + 104)
-		fl_surface_DrawTexturedRectUV(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
+		draw_uv_texture(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
 		
 		fl_draw_SimpleText(text, "MingeDefenseUIStatusLarge", status_bar_x + status_bar_w * 0.5, status_armor_bar_y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 		fl_draw_SimpleText(tostring(armor), "MingeDefenseUIStatusSmall", status_bar_x + status_bar_w * 0.5, status_armor_bar_y + status_armor_bar_h, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)

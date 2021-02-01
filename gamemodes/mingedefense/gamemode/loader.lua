@@ -89,7 +89,8 @@ local function load_by_order()
 		local script_paths = load_order[priority]
 		
 		if script_paths then
-			print(" ]Loading scripts at level " .. priority .. "...")
+			if priority == 0 then print(" Loading scripts at level 0...")
+			else print("\n Loading scripts at level " .. priority .. "...") end
 			
 			--if there are scripts in this load order, then load them
 			for script_path, bits in pairs(script_paths) do

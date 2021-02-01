@@ -18,14 +18,16 @@ function ENT:KeyValue(key, value)
 	self.Keys[key] = value
 	
 	if key == "mdgroupid" then
-		if MingeDefenseMingeSpawns[value] then MingeDefenseMingeSpawns[value][self:EntIndex()] = self:GetPos()
-		else MingeDefenseMingeSpawns[value] = {[self:EntIndex()] = self:GetPos()} end
+		if MingeDefenseMingeSpawns[value] then table.insert(MingeDefenseMingeSpawns[value], self)
+		else MingeDefenseMingeSpawns[value] = {self} end
 	end
 end
 
 --spawn a minge from the queue
 function ENT:PopQueue()
 	local minge_class = table.remove(self.QueuedSpawns, 1)
+	
+	debugoverlay.Text(self:GetPos(), "Popped queue", 2, false)
 	
 	self:SpawnMinge(minge_class)
 	
@@ -35,6 +37,8 @@ end
 --queue up minges to spawn
 function ENT:QueueSpawn(minge)
 	self:SetQueueActive(true)
+	
+	debugoverlay.Text(self:GetPos(), "Spawn queued", 2, false)
 	
 	table.insert(self.QueuedSpawns, minge)
 end
@@ -51,12 +55,13 @@ end
 --check if we can spawn them, and if so, pop queue
 function ENT:Think()
 	if self.QueueActive then
+		--box mins -13, -13, -5.93788 maxs 13, 13, 72
 		local trace = util.TraceHull({
 			endpos = self:GetPos() + Vector(0, 0, 72),
 			ignoreworld = true,
-			mase = MASK_NPCSOLID,
-			maxs = Vector(18, 18, 0),
-			mins = Vector(-18, -18, 0),
+			mask = MASK_NPCSOLID,
+			maxs = Vector(13, 13, 0),
+			mins = Vector(-13, -13, 0),
 			start = self:GetPos(),
 		})
 		
