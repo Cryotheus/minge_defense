@@ -113,7 +113,7 @@ local function load_map()
 	
 end
 
---post function setup
+--gamemode functions
 function GM:LoadScripts()
 	local load_start_time = SysTime()
 	
@@ -127,21 +127,27 @@ function GM:LoadScripts()
 	
 	local load_finish_time = SysTime()
 	local load_duration = load_finish_time - load_start_time
-	local load_message = string.format("Gamemode file loading finished! Lasted %.2f seconds.", load_duration)
 	
-	hook.Call("LoadFinished", self, load_start_time, load_finish_time, load_duration, load_message)
+	hook.Call("LoadFinished", self, load_start_time, load_finish_time, load_duration)
 end
 
---gamemode functions
-function GM:LoadFinished(load_start_time, load_finish_time, load_duration, load_message)
+function GM:LoadFinished(load_start_time, load_finish_time, load_duration)
+	local load_message = string.format("Gamemode file loading finished! Lasted %.2f seconds.", load_duration)
+	
 	print(load_message)
 	
 	return load_start_time, load_finish_time, load_duration, load_message
 end
 
+function GM:ReloadScripts() hook.Call("LoadScripts", self) end
+
 --concommand
-concommand.Add("md_reload", function(ply, command, arguments, arguments_string) if not IsValid(ply) or ply == LocalPlayer() then hook.Call("LoadScripts", GM) end
+concommand.Add("md_reload", function(ply, command, arguments, arguments_string)
+	if not IsValid(ply) or ply == LocalPlayer() then
+		--reset code
+		hook.Call("ReloadScripts", self)
+	end
 end, nil, "nil")
 
---post gamemode funciton setup
+--post
 hook.Call("LoadScripts", GM)

@@ -2,11 +2,9 @@ DEFINE_BASECLASS("gamemode_sandbox")
 include("shared.lua")
 
 --temporary
---[[resource.AddFile("materials/models/minge_defense/wrench/cryotheum_reference.vmt")
-resource.AddFile("models/minge_defense/wrench/cryotheum_reference.mdl")]]
-
 --heil franklin gothic heavy
 resource.AddSingleFile("resource/fonts/minge_defense.ttf")
+resource.AddSingleFile("resource/localization/en/mingedefense.properties")
 
 resource.AddFile("models/minge_defense/weapons/c_wrench/c_wrench.mdl")
 resource.AddFile("materials/models/minge_defense/weapons/c_wrench/c_wrench.vmt")
@@ -30,6 +28,11 @@ resource.AddSingleFile("sound/minge_defense/weapons/wrench/swing.wav")
 util.AddNetworkString("minge_defense_url")
 
 --gamemode functions
+function GM:CreateEntityRagdoll(owner, ragdoll)
+	--
+	PrintMessage(HUD_PRINTTALK, "Ragdoll created. " .. tostring(owner) .. ", " .. tostring(ragdoll))
+end
+
 function GM:Initialize()
 	print("Initialized gamemode by provided function. (Server)")
 	

@@ -2,6 +2,17 @@ DEFINE_BASECLASS("gamemode_sandbox")
 include("shared.lua")
 
 --gamemode functions
+function GM:CreateClientsideRagdoll(entity, ragdoll)
+	if IsValid(entity) and entity.IsMinge then
+		local color = entity.ShirtColor
+		local start_time = RealTime()
+		
+		function ragdoll:GetPlayerColor() return color end
+		
+		timer.Simple(5, function() if IsValid(ragdoll) and ragdoll:IsRagdoll() then ragdoll:SetSaveValue("m_bFadingOut", true) end end)
+	end
+end
+
 function GM:Initialize()
 	print("Initialized gamemode by provided function. (Client)")
 	
@@ -9,8 +20,6 @@ function GM:Initialize()
 end
 
 function GM:InitPostEntity()
-	for i = 1, 20 do print("InitPostEntity ran, luckily.") end
-	
 	hook.Call("LocalPlayerInitialized", self, LocalPlayer())
 	
 	timer.Simple(5, function()

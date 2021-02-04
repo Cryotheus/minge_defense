@@ -3,7 +3,7 @@ MingeDefenseMingeIcons = MingeDefenseMingeIcons or {}
 
 local render_size = 512
 
-function GM:WaveGenerateIcon(class, ENT, sobel, sobel_passes, debug_draw)
+function GM:WaveGenerateIcon(class, ENT, sobel, sobel_passes)
 	local camera_data = ENT.IconCamera
 	local existing_material = MingeDefenseMingeIcons[class]
 	local lighting = camera_data.AutoLighting
@@ -52,7 +52,7 @@ function GM:WaveScanSENTS()
 		local ENT = scripted_ents.GetStored(class)
 		local overrides = data.t
 		
-		if ENT.IconCamera then
+		if ENT.DrawIconModels then
 			--debugging! only do the first one right now
 			local material = hook.Call("WaveGenerateIcon", self, class, ENT, 0.99, 2)
 			

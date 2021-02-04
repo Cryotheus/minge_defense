@@ -14,10 +14,10 @@ local wave_generator --function to generate default waves
 
 --local tables
 local fetching_functions = {
-	function() if wave_generator then return wave_generator(wave) end end, --use the wave generator function
-	function() return include("minge_defense_maps/" .. game.GetMap() .. "/configs/" .. wave_difficulty .. ".lua") end, --load the selected difficulty for the map
-	function() return include("minge_defense_maps/" .. game.GetMap() .. "/configs/normal.lua") end, --load the default difficulty for the map
-	function() return {} end --wow still no table
+	function(wave_difficulty, wave) if wave_generator then return wave_generator(wave) end end, --use the wave generator function
+	function(wave_difficulty, wave) return include("minge_defense_maps/" .. game.GetMap() .. "/configs/" .. wave_difficulty .. ".lua") end, --load the selected difficulty for the map
+	function(wave_difficulty, wave) return include("minge_defense_maps/" .. game.GetMap() .. "/configs/normal.lua") end, --load the default difficulty for the map
+	function(wave_difficulty, wave) return {} end --wow still no table
 }
 
 --temp locals
@@ -114,7 +114,7 @@ function GM:WaveGetTable()
 	--so I made a table of functions to run until we get a table
 	for attempt, fetching_function in ipairs(fetching_functions) do
 		print("Attempting to fetch the wave table, attempt #" .. attempt .. ".")
-		wave_table = fetching_functions[attempt]()
+		wave_table = fetching_functions[attempt](wave_difficulty, wave)
 		
 		if wave_table then break end
 	end
@@ -122,16 +122,19 @@ function GM:WaveGetTable()
 	return wave_table
 end
 
+function GM:WaveSendEnemies()
+	local data = {}
+	
+	hook.Add("Think", "minge_defense_wave_update", function()
+		
+	end)
+end
+
 function GM:WaveSpawn(enemy, count, spawn_group_id)
 	local spawn_points = MingeDefenseMingeSpawns[spawn_group_id]
 	
 	for index = 1, count or 1 do
 		spawn_cursors[spawn_group_id] = (spawn_cursors[spawn_group_id] % spawn_totals[spawn_group_id]) + 1
-		
-		print(spawn_cursors) --table
-		print(spawn_cursors[spawn_group_id]) --number
-		print(spawn_points) --table
-		print(spawn_points[spawn_cursors[spawn_group_id]]) --nil
 		
 		spawn_points[spawn_cursors[spawn_group_id]]:QueueSpawn(enemy)
 	end
@@ -216,6 +219,6 @@ end
 --hooks
 hook.Add("OnReloaded", "minge_defense_wave", function() TestWaveGen() end)
 
-hook.Add("Think", "minge_defense_wave_update", function()
+--[[hook.Add("Think", "minge_defense_wave_update", function()
 	
-end)
+end)]]

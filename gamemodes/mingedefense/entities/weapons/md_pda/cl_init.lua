@@ -4,25 +4,33 @@ SWEP.Author = "Cryotheum"
 SWEP.Category = "Minge Defense"
 SWEP.DrawAmmo = false
 SWEP.DrawCrosshair = false
-SWEP.Instructions = "Left click to interact with the PDA, right click to select entities."
-SWEP.PrintName = "Minge Defense PDA"
-SWEP.Purpose = "Personal Digital Assistant for Minge Defense."
+SWEP.Instructions = language.GetPhrase("#mingedefense.weapons.pda.instructions")
+SWEP.PrintName = language.GetPhrase("#mingedefense.weapons.pda")
+SWEP.Purpose = language.GetPhrase("#mingedefense.weapons.pda.purpose")
 
---custom to weapon
-SWEP.ActivatedTime = nil
-SWEP.DeactivatedTime = nil
-SWEP.Menu = nil
+----calculated variables
+	local frame_margin = 100
+	local frame_margin_double = frame_margin * 2
+	local frame_h
+	local frame_w
+
+--local funcitons
+local function calc_vars(scr_w, scr_h)
+	frame_h = scr_h - frame_margin_double
+	frame_w = scr_w - frame_margin_double
+end
 
 --swep functions
 function SWEP:Deploy() self:SetSkin(1) end
 
 function SWEP:Holster()
+	if IsValid(self.Canvas) then self.Canvas:Remove() end
 	if IsValid(self.Menu) then self.Menu:Remove() end
 	
 	self.ActivatedTime = nil
 	self.DeactivatedTime = nil
 	
-	hook.Remove("PostDrawHUD", "minge_defense_pda")
+	hook.Remove("PostRenderVGUI", "minge_defense_pda")
 end
 
 function SWEP:Initialize()
@@ -36,8 +44,11 @@ function SWEP:PostDrawViewModel(entity, weapon, ply)
 	--so the scale should be math.min(11 / ScrW(), 6.375 / ScrH())
 	
 	if IsValid(self.Menu) and self.ScreenPos then
-		cam.Start3D2D(self.ScreenPos, self.ScreenAngle, math.min(11 / ScrW(), 6.375 / ScrH()))
-			self.Menu:PaintAt(100, 100)
+		local width, height = 11 / ScrW(), 6.375 / ScrH()
+		local scale = math.min(height, width)
+		
+		cam.Start3D2D(self.ScreenPos, self.ScreenAngle, scale)
+			self.Menu:PaintAt(frame_margin + (width - scale) * 0.5, frame_margin + (height - scale) * 0.5)
 		cam.End3D2D()
 	end
 end
@@ -75,46 +86,67 @@ function SWEP:PreDrawViewModel(entity, weapon, ply)
 			entity:SetSkin(2)
 			--x / 1920  = 0.0057
 			self.ScreenPos, self.ScreenAngle = LocalToWorld(Vector(3.9, 4, 3.6), Angle(90, 0, 0), activated_pos, activated_angles)
-		else
-			--finished animating, activate menu
-			local frame = vgui.Create("DFrame", GetHUDPanel(), "MingeDefensePDA")
-			swep.Menu = frame
+		else --finished animating, activate menu
+			local canvas
+			local frame
 			
-			frame:SetDraggable(false)
-			frame:SetPos(100, 100)
-			frame:SetPaintedManually(true)
-			frame:SetSize(ScrW() - 500, ScrH() - 500)
-			frame:SetTitle("Minge Defense PDA")
-			
-			--make sure they can deactivate the pda
-			function frame:OnRemove()
-				swep.ActivatedTime = nil
-				swep.DeactivatedTime = CurTime()
-				swep.Menu = nil
+			do --canvas, just for rendering the frame properly
+				canvas = vgui.Create("DPanel", GetHUDPanel())
 				
-				hook.Remove("PostDrawHUD", "minge_defense_pda")
+				canvas:Dock(FILL)
+				
+				function canvas:Paint(width, height) frame:PaintManual() end
 			end
 			
-			local form = vgui.Create("DForm", frame)
+			do --frame
+				frame = vgui.Create("DFrame", GetHUDPanel(), "MingeDefensePDA")
+				
+				frame:SetBackgroundBlur(true)
+				frame:SetDraggable(false)
+				frame:SetPos(frame_margin, frame_margin)
+				frame:SetPaintedManually(true)
+				frame:SetSize(frame_w, frame_h)
+				frame:SetTitle("#mingedefense.pda.title")
+				
+				--make sure they can deactivate the pda
+				function frame:OnRemove()
+					swep.ActivatedTime = nil
+					swep.DeactivatedTime = CurTime()
+					swep.Menu = nil
+					
+					canvas:Remove()
+					
+					hook.Remove("PostRenderVGUI", "minge_defense_pda")
+				end
+				
+				function frame:Paint(width, height)
+					surface.SetDrawColor(0, 0, 0, 128)
+					surface.DrawRect(0, 0, width, height)
+				end
+				
+				do --button
+					local button = vgui.Create("DButton", frame)
+					
+					button:Dock(LEFT)
+					button:DockMargin(4, frame_h * 0.1, 0, frame_h * 0.7)
+					button:SetText("#mingedefense.pda.button")
+					button:SetWidth(frame_w * 0.25)
+					
+					function button:Paint(width, height)
+						surface.SetDrawColor(0, 0, 0, 128)
+						surface.DrawRect(0, 0, width, height)
+					end
+				end
+				
+				--finally show the frame
+				frame:MakePopup()
+			end
 			
-			form:Dock(FILL)
-			form:SetName("Cool PDA Test Initiative #040")
-			
-			form:Button("This is a button", "say")
-			form:Button("This is also a button", "say")
-			form:CheckBox("I think this is pretty cool", "say")
-			form:CheckBox("Even if we are rendering the panel twice", "say")
-			form:CheckBox("It's a cool effect", "say")
-			form:ControlHelp("This is the PDA that will be used to buy stuff in my new gamemode: Minge Defense")
-			form:Help("You can buy upgrades, weapons, and towers here.")
-			form:NumSlider("The copy of the GUI updates live on the PDA as it is a re-render.", "say", 0, 4, 1)
-			form:TextEntry("I'm real excitied to kill some minges, how about you?", "say")
-			
-			--finally show the frame
-			frame:MakePopup()
+			swep.Menu = frame
+			swep.Canvas = canvas
 			
 			--render the frame because we do it manually
-			hook.Add("PostDrawHUD", "minge_defense_pda", function() frame:PaintManual() end)
+			--hook.Add("PostRenderVGUI", "minge_defense_pda", function() frame:PaintManual() end)
 			
 			entity:SetAngles(activated_angles)
 			entity:SetPos(activated_pos)
@@ -155,3 +187,9 @@ function SWEP:PrimaryAttack()
 		self:SetNextPrimaryFire(cur_time + 0.5)
 	end
 end
+
+--post function setup
+calc_vars(ScrW(), ScrH())
+
+--hooks
+hook.Add("OnScreenSizeChanged", "minge_defense_pda", function() calc_vars(ScrW(), ScrH()) end)
