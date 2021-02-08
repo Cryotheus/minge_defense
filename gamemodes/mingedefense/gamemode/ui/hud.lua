@@ -22,7 +22,13 @@ function GM:HUDPaint()
 	end
 end
 
-function GM:HUDShouldDraw(name) return not blocked_elements[name] end
+function GM:HUDCalculateVariables(width, height, old_width, old_height, local_ply)
+	--called when the screen size changes, when the local player initializes, and when the gamemode is reloaded
+	--calculate you variables for the HUD here
+	ply = IsValid(ply) and ply or local_ply
+	
+	hook.Call("HUDStatusCalculateVariables", self, width, height, old_width, old_height, ply)
+	hook.Call("HUDTeamPanelCalculateVariables", self, width, height, old_width, old_height, ply)
+end
 
---hooks
-hook.Add("LocalPlayerInitialized", "minge_defense_hud", function(local_ply) ply = local_ply end)
+function GM:HUDShouldDraw(name) return not blocked_elements[name] end

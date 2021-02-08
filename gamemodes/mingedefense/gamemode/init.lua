@@ -25,6 +25,7 @@ resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_success_2.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_world.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/swing.wav")
 
+util.AddNetworkString("minge_defense_player_init")
 util.AddNetworkString("minge_defense_url")
 
 --gamemode functions
@@ -37,6 +38,19 @@ function GM:Initialize()
 	print("Initialized gamemode by provided function. (Server)")
 	
 	BaseClass.Initialize(self)
+end
+
+function GM:PlayerDisconnected(ply)
+	--lets not make Round too greedy
+	hook.Call("RoundPlayerDisconnect", self, ply)
+end
+
+function GM:PlayerInitialSpawn(ply, ...)
+	BaseClass.PlayerInitialSpawn(self, ply, ...)
+	
+	net.Start("minge_defense_player_init")
+	net.WriteEntity(ply)
+	net.Broadcast()
 end
 
 function GM:PlayerSpawn(ply, transiton)

@@ -1,9 +1,10 @@
 MingeDefenseMingeSENTS = MingeDefenseMingeSENTS or {}
 MingeDefenseMingeIcons = MingeDefenseMingeIcons or {}
 
+local ready = false
 local render_size = 512
 
-function GM:WaveGenerateIcon(class, ENT, sobel, sobel_passes)
+function GM:RoundGenerateIcon(class, ENT, sobel, sobel_passes)
 	local camera_data = ENT.IconCamera
 	local existing_material = MingeDefenseMingeIcons[class]
 	local lighting = camera_data.AutoLighting
@@ -47,14 +48,14 @@ function GM:WaveGenerateIcon(class, ENT, sobel, sobel_passes)
 	end
 end
 
-function GM:WaveScanSENTS()
+function GM:RoundScanSENTS()
 	for class, data in pairs(scripted_ents.GetList()) do
 		local ENT = scripted_ents.GetStored(class)
 		local overrides = data.t
 		
 		if ENT.DrawIconModels then
 			--debugging! only do the first one right now
-			local material = hook.Call("WaveGenerateIcon", self, class, ENT, 0.99, 2)
+			local material = hook.Call("RoundGenerateIcon", self, class, ENT, 0.99, 2)
 			
 			print("material generated!", material, material:GetName())
 			
@@ -66,7 +67,7 @@ function GM:WaveScanSENTS()
 	end
 end
 
-function GM:WaveTestIcons()
+function GM:RoundTestIcons()
 	local frame = vgui.Create("DFrame")
 	
 	frame:SetSize(1038, 1062)
@@ -98,17 +99,30 @@ function GM:WaveTestIcons()
 end
 
 --concommands
-concommand.Add("gm_showspare2", function(command, ply, arguments, arguments_string)
-	local state = tobool(arguments[1])
+--[[concommand.Add("gm_showspare2", function(command, ply, arguments, arguments_string)
+	local argument = arguments[1]
+	local state = argument and tobool(arguments[1]) or ready
 	
-	net.Start("minge_defense_wave_ready")
-	net.WriteBool()
-	net.SendToServer()
-end, nil, "Mark yourself as ready for the next wave.")
+	if argument then state = tobool(arguments[1]) end
+	if state == nil then state = not ready end
+	
+	if state ~= ready then
+		print(state and "Telling the server we are ready." or "Telling the server we are not ready.") 
+		
+		net.Start("minge_defense_ready")
+		net.WriteBool(state)
+		net.SendToServer()
+	else print("Could not change ready status.")
+end, nil, "Mark yourself as ready for the next wave.")]]
 
 --net
-net.Receive("minge_defense_wave_ready", function()
-	local plys = net.ReadTable()
-	
-	--do stuff like update the hud... maybe make a file in the ui folder
+net.Receive("minge_defense_ready", function()
+	--todo: don't use net.ReadTable
+	if net.ReadBool() then
+		local plys = net.ReadTable()
+		
+		ready = plys[LocalPlayer():EntIndex()] or false
+		
+		print("the color is blue, to show the people, that we are " .. tostring(ready))
+	else print("bruhhhh the round started") end
 end)

@@ -34,11 +34,14 @@ local config = {
 		hud = 29,		--011 101
 		status = 37,	--100 101
 		target_id = 29,	--011 101
+		team = 37,		--100 101
 	},
 	
-	waves = {
+	rounds = {
 		client = 21,	--10 101
-		server = 18		--10 010
+		server = 18,	--10 010
+		cl_waves = 29,	--11 101
+		sv_waves = 26	--11 010
 	}
 }
 

@@ -137,11 +137,7 @@ function ENT:OnKilled(damage_info)
 	
 	self:BecomeRagdoll(damage_info)
 	self:EmitVOSound(self.DeathSounds, self.DeathSoundCount)
-	
-	timer.Remove("minge_stuck_" .. self:EntIndex())
 end
-
-function ENT:OnRemove() timer.Remove("minge_stuck_" .. self:EntIndex()) end
 
 function ENT:RunBehaviour()
 	--make them move to the target
@@ -175,17 +171,17 @@ function ENT:Think()
 		
 		table.insert(filter, self)
 		
-		local trace = util.TraceHull({
+		local trace_entity = util.TraceHull({
 			endpos = self:GetPos() + Vector(0, 0, 72),
 			filter = filter,
 			ignoreworld = true,
 			mask = MASK_NPCSOLID,
-			maxs = Vector(13, 13, 0),
-			mins = Vector(-13, -13, 0),
+			maxs = Vector(14, 14, 0),
+			mins = Vector(-14, -14, 0),
 			start = self:GetPos(),
-		})
+		}).Entity
 		
-		if not IsValid(trace.Entity) then
+		if not (IsValid(trace_entity) and trace_entity.IsMinge) then
 			self:SetSolidMask(MASK_NPCSOLID)
 			
 			print(self, "we're not stuck anymore")

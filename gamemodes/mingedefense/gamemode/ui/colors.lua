@@ -15,13 +15,20 @@ MingeDefenseColors = {
 			Armor = Color(128, 255, 128),
 			Background = Color(20, 20, 20, 96),
 			Health = Color(192, 32, 32),
-			HealthBackground = Color(192 * temp, 32 * temp, 32 * temp)
+			HealthBackground = Color(115, 19, 19)
 		},
 		
 		TargetID = {
 			ShadowDeep = Color(0, 0, 0, 120),
 			ShadowShallow = Color(0, 0, 0, 50),
 			Text = Color(0, 192, 0)
+		},
+		
+		Team = {
+			Background = Color(20, 20, 20, 96),
+			BackgroundPlayer = Color(64, 64, 64, 255),
+			BackgroundPlayers = Color(20, 20, 20, 32),
+			BackgroundReadyPlayer = Color(128, 255, 128, 255)
 		}
 	},
 	

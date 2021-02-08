@@ -51,28 +51,6 @@ local pi = math.pi
 --local functions
 local function even_floor(value) return fl_math_floor(value * 0.5) * 2 end
 
-local function calc_vars(scr_w, scr_h)
-	local status_margin_double = status_margin * 2
-	local status_armor_margin_double = status_armor_margin * 2
-	local status_scale = even_floor(scr_w * 0.15)
-	
-	status_h = even_floor(status_scale * 0.15)
-	status_w = status_scale
-	status_y = scr_h - status_h - margin
-	
-	status_bar_h = status_h - status_margin_double
-	status_bar_w = status_w - status_margin_double
-	status_bar_x = margin + status_margin
-	status_bar_y = status_y + status_margin
-	
-	status_armor_bar_h = status_h - status_armor_margin_double
-	status_armor_bar_w = status_w - status_armor_margin_double
-	status_armor_bar_x = margin + status_armor_margin
-	status_armor_bar_y = status_y + status_armor_margin
-	
-	money_h = status_h
-end
-
 local function draw_uv_texture(x, y, width, height, start_u, start_v, end_u, end_v)
 	fl_surface_DrawTexturedRectUV(
 		x,
@@ -137,7 +115,24 @@ function GM:HUDDrawStatus(ply)
 	else fl_draw_SimpleText(text, "MingeDefenseUIStatusLarge", status_bar_x + status_bar_w * 0.5, status_bar_y + status_bar_h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER) end
 end
 
---hooks
-hook.Add("OnReloaded", "minge_defense_status", function() hook.GetTable().LocalPlayerInitialized.minge_defense_status(LocalPlayer()) end)
-hook.Add("OnScreenSizeChanged", "minge_defense_status", function() calc_vars(ScrW(), ScrH()) end)
-hook.Add("LocalPlayerInitialized", "minge_defense_status", function(ply) hook.GetTable().OnScreenSizeChanged.minge_defense_status() end)
+function GM:HUDStatusCalculateVariables(width, height)
+	local status_margin_double = status_margin * 2
+	local status_armor_margin_double = status_armor_margin * 2
+	local status_scale = even_floor(width * 0.15)
+	
+	status_h = even_floor(status_scale * 0.15)
+	status_w = status_scale
+	status_y = height - status_h - margin
+	
+	status_bar_h = status_h - status_margin_double
+	status_bar_w = status_w - status_margin_double
+	status_bar_x = margin + status_margin
+	status_bar_y = status_y + status_margin
+	
+	status_armor_bar_h = status_h - status_armor_margin_double
+	status_armor_bar_w = status_w - status_armor_margin_double
+	status_armor_bar_x = margin + status_armor_margin
+	status_armor_bar_y = status_y + status_armor_margin
+	
+	money_h = status_h
+end
