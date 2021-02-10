@@ -30,7 +30,7 @@ local function header_text(ready, ready_timer)
 		
 		return GAMEMODE:LangGetFormattedPhrase("mingedefense.ui.team.header.timer", {elipse = string.rep(".", time % 3 + 1), time = time % 60})
 	elseif ready then return language.GetPhrase("mingedefense.ui.team.header.ready")
-	else return GAMEMODE:LangGetFormattedPhrase("mingedefense.ui.team.header.unready", {key = string.upper(input.LookupBinding("gm_showspare2") or "NIL")}) end
+	else return GAMEMODE:LangGetFormattedPhrase("mingedefense.ui.team.header.unready", {key = string.upper(input.LookupBinding("gm_showspare2") or "NIL")}) end --prioritize the md_ready command in finding the key
 end
 
 --gamemode functions
