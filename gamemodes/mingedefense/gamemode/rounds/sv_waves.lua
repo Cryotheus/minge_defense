@@ -4,7 +4,6 @@ MingeDefenseMingeSpawns = MingeDefenseMingeSpawns or {}
 --locals
 local spawn_cursors
 local spawn_totals
-local wave_difficulty = "normal"
 local wave_max = 1
 
 --gamemode functions
@@ -12,7 +11,7 @@ function GM:WaveCalculateSpawns(spawn_group_id)
 	spawn_cursors[spawn_group_id] = 1
 	spawn_totals[spawn_group_id] = 0
 	
-	for index, entity in pairs(MingeDefenseMingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
+	for index, entity in pairs(self.MingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
 end
 
 function GM:WaveEnd(wave, wave_table, wave_start_time, wave_end_time)

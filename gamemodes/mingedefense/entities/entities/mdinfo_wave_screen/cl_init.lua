@@ -13,8 +13,6 @@ local logo = Material("minge_defense/gui/logo512.png")
 
 --entity functions
 function ENT:CreatePanel()
-	LocalPlayer():PrintMessage(HUD_PRINTCENTER, "Reloaded " .. tostring(self))
-	
 	local panel = vgui.Create("DPanel")
 	local panel_h, panel_w = 540, 960
 	

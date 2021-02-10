@@ -2,7 +2,12 @@ DEFINE_BASECLASS("gamemode_sandbox")
 include("shared.lua")
 
 --gamemode functions
-function GM:CLPlayerInitialSpawn(ply) if ply ~= LocalPlayer() then hook.Call("HUDCreateTeamPanel", self) end end
+function GM:CLPlayerInitialSpawn(ply)
+	if ply ~= LocalPlayer() then
+		hook.Call("HUDTeamPanelCalculateVariables", self, ScrW(), ScrH())
+		hook.Call("HUDCreateTeamPanel", self)
+	end
+end
 
 function GM:CreateClientsideRagdoll(entity, ragdoll)
 	if IsValid(entity) and entity.IsMinge then
@@ -49,9 +54,7 @@ end
 
 --net
 net.Receive("minge_defense_player_init", function() hook.Call("CLPlayerInitialSpawn", GAMEMODE, net.ReadEntity()) end)
-
 net.Receive("minge_defense_url", function() gui.OpenURL(net.ReadString()) end)
-
 
 --finish off with the rest of the scripts
 include("loader.lua")

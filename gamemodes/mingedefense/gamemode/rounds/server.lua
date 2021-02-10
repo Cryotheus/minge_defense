@@ -12,6 +12,7 @@ local ready_allowed = false
 local ready_cooldown = true
 local ready_cooldowns = {}
 local ready_players = {}
+local ready_timer = false
 local round_table
 
 --local table constants
@@ -95,6 +96,28 @@ local function generate_wave_spawn_order(wave_table)
 	return wave_groups, wave_order
 end
 
+local function ready_player(ply, arguments)
+	local access = ready_allowed and IsValid(ply) and not (ready_cooldown and ready_cooldowns[ply])
+	
+	if access then
+		local argument = arguments and arguments[1]
+		local ready = ready_players[ply]
+		local state
+		
+		if argument then state = tobool(argument) end
+		if state == nil then state = not ready end
+		
+		if state ~= ready then
+			ply:PrintMessage(HUD_PRINTCONSOLE, state and "You are now ready." or "You are no longer ready.") 
+			
+			ready_cooldowns[ply] = true
+			
+			timer.Simple(1, function() if IsValid(ply) then ready_cooldowns[ply] = nil end end)
+			hook.Call("RoundPlayerReady", GAMEMODE, ply, state)
+		else ply:PrintMessage(HUD_PRINTCONSOLE, state and "You already marked yourself as ready, the state did not change." or "You already marked yourself as unready, the state did not change.") end
+	else ply:PrintMessage(HUD_PRINTCONSOLE, "Please wait before updating your ready status.") end
+end
+
 --[[local function process_wave_table(wave_table)
 	local meta = wave_table.meta
 	
@@ -172,18 +195,31 @@ end
 function GM:RoundPlayerReady(ready_ply, ready)
 	if not ready_allowed then return nil end
 	
+	local ply_count = 0
+	local ready_count = 0
+	
 	network_ready_players = true
-	ready_players[ready_ply] = state
+	ready_players[ready_ply] = ready
 	
 	for index, ply in ipairs(player.GetAll()) do
-		if ready_players[ply] then continue end
+		if ready_players[ply] then ready_count = ready_count + 1 end
 		
-		return false
+		ply_count = ply_count + 1
 	end
 	
-	hook.Call("RoundReady", self)
+	if ready_count >= ply_count then hook.Call("RoundReady", self)
+	elseif ready_count > 0 then --TODO: make a convar for this, like what percent of players have to be ready before we can start the timer?
+		if ready_timer then
+			--decrease time on timer
+			
+		else
+			--start timer
+			
+			ready_timer = true
+		end
+	end
 	
-	return true
+	return ready_count
 end
 
 function GM:RoundReady()
@@ -193,32 +229,24 @@ function GM:RoundReady()
 	hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
 end
 
+function GM:ShowSpare2(ply) ready_player(ply) end
+
 --commands
 --TODO: figure out a way to localize this
-concommand.Add("gm_showspare2", function(command, ply, arguments, arguments_string)
-	if ready_allowed and IsValid(ply) and not (ready_cooldown and ready_cooldowns[ply]) then
-		local argument = arguments[1]
-		local state
-		
-		if argument then state = tobool(argument) end
-		if state == nil then state = not ready_players[ply] end
-		
-		if state ~= ready then
-			ply:PrintMessage(HUD_PRINTCONSOLE, state and "You are now ready." or "You are no longer ready.") 
-			
-			ready_cooldowns[ply] = true
-			
-			timer.Simple(1, function() if IsValid(ply) then ready_cooldowns[ply] = nil end end)
-			hook.Call("RoundPlayerReady", GAMEMODE, ply, net.ReadBool())
-		else ply:PrintMessage(HUD_PRINTCONSOLE, state and "You already marked yourself as ready, the state did not change." or "You already marked yourself as unready, the state did not change.") end
-	else ply:PrintMessage(HUD_PRINTCONSOLE, "Please wait before updating your ready status.") end
-end)
+concommand.Add("md_ready", function(ply, command, arguments, arguments_string) ready_player(ply, arguments) end)
 
 --hooks
 hook.Add("Think", "minge_defense_round", function()
 	if network_ready_players then
+		network_ready_players = nil
+		
+		--we are counting down
+		
 		net.Start("minge_defense_ready")
 		net.WriteBool(ready_allowed)
+		net.WriteBool(ready_timer)
+		net.WriteTable(ready_players)
+		net.Broadcast()
 	end
 end)
 

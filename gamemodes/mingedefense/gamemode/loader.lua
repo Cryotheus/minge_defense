@@ -29,6 +29,10 @@ local config = {
 	},
 	
 	ui = {
+		panels = {
+			marquee_label = 21	--010 101
+		},
+		
 		colors = 21,	--010 101
 		fonts = 21,		--010 101
 		hud = 29,		--011 101

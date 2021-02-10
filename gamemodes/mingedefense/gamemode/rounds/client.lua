@@ -1,12 +1,14 @@
-MingeDefenseMingeSENTS = MingeDefenseMingeSENTS or {}
-MingeDefenseMingeIcons = MingeDefenseMingeIcons or {}
+GM.MingeSENTS = GM.MingeSENTS or {}
+GM.MingeIcons = GM.MingeIcons or {}
+GM.PlayersReady = {}
+GM.ReadyTimer = false
 
 local ready = false
 local render_size = 512
 
 function GM:RoundGenerateIcon(class, ENT, sobel, sobel_passes)
 	local camera_data = ENT.IconCamera
-	local existing_material = MingeDefenseMingeIcons[class]
+	local existing_material = self.MingeIcons[class]
 	local lighting = camera_data.AutoLighting
 	local render_target = GetRenderTargetEx("mdiconrt_" .. class, render_size, render_size, RT_SIZE_OFFSCREEN, MATERIAL_RT_DEPTH_SEPARATE, 256, 0, IMAGE_FORMAT_BGRA8888)
 	
@@ -61,9 +63,9 @@ function GM:RoundScanSENTS()
 			
 			ENT.IconOverride = material:GetName() --materials/entities/<ClassName>.png
 			ENT.IconMaterial = material
-			MingeDefenseMingeIcons[class] = material
-			MingeDefenseMingeSENTS[class] = ENT
-		elseif ENT.IsMinge then MingeDefenseMingeSENTS[class] = true end
+			self.MingeIcons[class] = material
+			self.MingeSENTS[class] = ENT
+		elseif ENT.IsMinge then self.MingeSENTS[class] = true end
 	end
 end
 
@@ -71,7 +73,7 @@ function GM:RoundTestIcons()
 	local frame = vgui.Create("DFrame")
 	
 	frame:SetSize(1038, 1062)
-	frame:SetTitle("Icon test with " .. table.Count(MingeDefenseMingeIcons) .. " icons")
+	frame:SetTitle("Icon test with " .. table.Count(self.MingeIcons) .. " icons")
 	
 	local layout = vgui.Create("DIconLayout", frame)
 	
@@ -79,7 +81,7 @@ function GM:RoundTestIcons()
 	layout:SetSpaceX(4, 4)
 	layout:SetSpaceY(4, 4)
 	
-	for class, icon in pairs(MingeDefenseMingeIcons) do
+	for class, icon in pairs(self.MingeIcons) do
 		local test = layout:Add("DPanel")
 		
 		function test:Paint(width, height)
@@ -98,31 +100,34 @@ function GM:RoundTestIcons()
 	frame:MakePopup()
 end
 
---concommands
---[[concommand.Add("gm_showspare2", function(command, ply, arguments, arguments_string)
-	local argument = arguments[1]
-	local state = argument and tobool(arguments[1]) or ready
-	
-	if argument then state = tobool(arguments[1]) end
-	if state == nil then state = not ready end
-	
-	if state ~= ready then
-		print(state and "Telling the server we are ready." or "Telling the server we are not ready.") 
-		
-		net.Start("minge_defense_ready")
-		net.WriteBool(state)
-		net.SendToServer()
-	else print("Could not change ready status.")
-end, nil, "Mark yourself as ready for the next wave.")]]
-
 --net
 net.Receive("minge_defense_ready", function()
-	--todo: don't use net.ReadTable
-	if net.ReadBool() then
+	--TODO: don't use net.ReadTable
+	--TODO: the timer code, lol. it should be its own panel parented to the team header, maybe give it a stencil scroll in animation
+	local local_ply = LocalPlayer()
+	local ready_allowed = net.ReadBool()
+	local ready_timer = net.ReadBool()
+	
+	GAMEMODE.ReadyTimer = ready_timer
+	
+	--temporary, just a set up to test
+	if ready_timer then
+		for ply, ply_ready in pairs(GAMEMODE.PlayersReady) do
+			if not ply_ready then
+				GAMEMODE.PlayersReady[ply] = true
+				
+				if ply ~= local_ply then hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, ply, true, true) end
+			end
+		end
+		
+		hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, local_ply, true, true)
+	elseif ready_allowed then
 		local plys = net.ReadTable()
+		local plys_old = table.Copy(GAMEMODE.PlayersReady)
+		GAMEMODE.PlayersReady = plys
 		
-		ready = plys[LocalPlayer():EntIndex()] or false
+		for ply, ply_ready in pairs(plys) do if plys_old[ply] ~= ply_ready then hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, ply, ply_ready, false) end end
 		
-		print("the color is blue, to show the people, that we are " .. tostring(ready))
+		ready = plys[LocalPlayer()] or false
 	else print("bruhhhh the round started") end
 end)

@@ -53,6 +53,14 @@ function GM:PlayerInitialSpawn(ply, ...)
 	net.Broadcast()
 end
 
+--[[
+function GM:PlayerShouldTakeDamage(ply, attacker)
+	if attacker:IsValid() and attacker:IsPlayer() and ply ~= attacker then return false end
+	
+	return true
+end
+]]
+
 function GM:PlayerSpawn(ply, transiton)
 	ply:UnSpectate()
 	ply:SetupHands()
@@ -68,6 +76,8 @@ function GM:PlayerSpawn(ply, transiton)
 	--stupid addons
 	hook.Call("PlayerSetModel", GAMEMODE, ply)
 end
+--
+function GM:PreCleanupMap() MingeDefenseMingeSpawns = {} end
 
 --we won't want them spawning crap with gm_spawn and stuff when the gamemode is ready, leaving it for debugging purpose as of right now
 --function GM:PlayerSpawnObject(ply, model, skin) return false end
