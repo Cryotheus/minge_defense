@@ -52,7 +52,7 @@ end
 
 function GM:RoundScanSENTS()
 	for class, data in pairs(scripted_ents.GetList()) do
-		local ENT = scripted_ents.GetStored(class)
+		local ENT = scripted_ents.Get(class)
 		local overrides = data.t
 		
 		if ENT.DrawIconModels then
@@ -65,7 +65,7 @@ function GM:RoundScanSENTS()
 			ENT.IconMaterial = material
 			self.MingeIcons[class] = material
 			self.MingeSENTS[class] = ENT
-		elseif ENT.IsMinge then self.MingeSENTS[class] = true end
+		elseif ENT.IsMinge then self.MingeSENTS[class] = ENT end
 	end
 end
 
@@ -104,30 +104,37 @@ end
 net.Receive("minge_defense_ready", function()
 	--TODO: don't use net.ReadTable
 	--TODO: the timer code, lol. it should be its own panel parented to the team header, maybe give it a stencil scroll in animation
+	local gm = GAMEMODE
 	local local_ply = LocalPlayer()
-	local ready_allowed = net.ReadBool()
-	local ready_timer = net.ReadBool()
 	
-	GAMEMODE.ReadyTimer = ready_timer
-	
-	--temporary, just a set up to test
-	if ready_timer then
-		for ply, ply_ready in pairs(GAMEMODE.PlayersReady) do
+	if net.ReadBool() then
+		for ply, ply_ready in pairs(gm.PlayersReady) do
 			if not ply_ready then
 				GAMEMODE.PlayersReady[ply] = true
 				
-				if ply ~= local_ply then hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, ply, true, true) end
+				hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, ply, true)
 			end
 		end
 		
-		hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, local_ply, true, true)
-	elseif ready_allowed then
-		local plys = net.ReadTable()
-		local plys_old = table.Copy(GAMEMODE.PlayersReady)
-		GAMEMODE.PlayersReady = plys
+		hook.Call("HUDTeamPanelUpdateHeader", gm, true, ready_allowed, ready)
+	else
+		local ready_allowed = net.ReadBool()
+		local ready_timer = net.ReadBool()
+		local sync_players = net.ReadBool()
 		
-		for ply, ply_ready in pairs(plys) do if plys_old[ply] ~= ply_ready then hook.Call("HUDTeamPanelUpdatePlayer", GAMEMODE, ply, ply_ready, false) end end
+		if ready_timer then gm.TeamPanel.LabelTimer:SetActivity(true, net.ReadFloat())
+		else gm.TeamPanel.LabelTimer:SetActivity(false) end
 		
-		ready = plys[LocalPlayer()] or false
-	else print("bruhhhh the round started") end
+		if ready_allowed and sync_players then
+			local plys = net.ReadTable()
+			local plys_old = table.Copy(gm.PlayersReady)
+			gm.PlayersReady = plys
+			
+			for ply, ply_ready in pairs(plys) do if plys_old[ply] ~= ply_ready then hook.Call("HUDTeamPanelUpdatePlayer", gm, ply, ply_ready) end end
+			
+			ready = plys[LocalPlayer()] or false
+		end
+		
+		hook.Call("HUDTeamPanelUpdateHeader", gm, false, ready_allowed, ready)
+	end
 end)

@@ -1,8 +1,18 @@
-local panel_b
-local panel_h
-local panel_lr
-local panel_oversized
-local panel_w
+local local_ready_allowed = false
+local local_wave_active = false
+
+----render parameters
+	local label_timer_h
+	local label_timer_rl
+	local label_timer_t
+	local marquee_label_b
+	local panel_b
+	local panel_h
+	local panel_lr
+	local panel_oversized
+	local panel_players_b
+	local panel_players_t
+	local panel_w
 
 ----colors
 	local associated_colors = MingeDefenseColors.HUD.Team
@@ -23,16 +33,6 @@ local function paint_unready(self, width, height)
 	surface.DrawRect(0, 0, width, height)
 end
 
-local function header_text(ready, ready_timer)
-	--temporary, ready_timer won't be in the header but instead its own panel in the future
-	if ready_timer then
-		local time = math.Round(CurTime())
-		
-		return GAMEMODE:LangGetFormattedPhrase("mingedefense.ui.team.header.timer", {elipse = string.rep(".", time % 3 + 1), time = time % 60})
-	elseif ready then return language.GetPhrase("mingedefense.ui.team.header.ready")
-	else return GAMEMODE:LangGetFormattedPhrase("mingedefense.ui.team.header.unready", {key = string.upper(input.LookupBinding("gm_showspare2") or "NIL")}) end --prioritize the md_ready command in finding the key
-end
-
 --gamemode functions
 function GM:HUDCreateTeamPanel()
 	hook.Call("HUDRemoveTeamPanel", self)
@@ -46,9 +46,9 @@ function GM:HUDCreateTeamPanel()
 		local marquee_label = vgui.Create("MDMarqueeLabel", panel)
 		
 		marquee_label:Dock(FILL)
-		marquee_label:DockMargin(0, 0, 0, panel_h * 0.75)
+		marquee_label:DockMargin(0, 0, 0, marquee_label_b)
 		marquee_label:SetFont("MingeDefenseUITeamHeader")
-		marquee_label:SetText(header_text(self.PlayersReady[LocalPlayer()], self.ReadyTimer))
+		marquee_label:SetText(hook.Call("HUDTeamPanelGetHeaderText", self, local_wave_active, local_ready_allowed, self.PlayersReady[LocalPlayer()]))
 		
 		panel.MarqueeLabel = marquee_label
 	end
@@ -60,7 +60,7 @@ function GM:HUDCreateTeamPanel()
 		panel_players.Players = {}
 		
 		panel_players:Dock(FILL)
-		panel_players:DockMargin(0, panel_h * 0.25, 0, 0)
+		panel_players:DockMargin(0, panel_players_t, 0, label_timer_h)
 		
 		panel_players.btnLeft:SetVisible(false)
 		panel_players.btnRight:SetVisible(false)
@@ -137,33 +137,106 @@ function GM:HUDCreateTeamPanel()
 		panel.PanelPlayers = panel_players
 	end
 	
-	--function panel:OnRemove() GAMEMODE.TeamPanel = nil end
+	do --timer label
+		local label = vgui.Create("DLabel", panel)
+		local speed = 3
+		
+		label.Active = false
+		label.Percent = 0
+		
+		label:Dock(FILL)
+		label:DockMargin(label_timer_rl, label_timer_t, label_timer_rl, label_timer_h * label.Percent)
+		label:SetContentAlignment(5)
+		label:SetFont("MingeDefenseUITeamTimer")
+		label:SetText("32")
+		label:SetTextColor(color_white)
+		label:SetVisible(false)
+		
+		function label:SetActivity(active, time)
+			self.Time = self.Time or time
+			
+			if self.Active ~= active then
+				self.Active = active
+				
+				if active then self:SetVisible(true)
+				else self:SetVisible(self.Percent ~= 0) end
+			end
+		end
+		
+		function label:Paint(width, height)
+			surface.SetDrawColor(color_background)
+			surface.DrawRect(0, 0, width, height)
+		end
+		
+		function label:Think()
+			local old_percent = self.Percent
+			local percent = math.Clamp(old_percent + RealFrameTime() * (self.Active and speed or -speed), 0, 1)
+			
+			if percent ~= old_percent then
+				self.Percent = percent
+				
+				if percent == 0 then
+					self:SetHeight(label_timer_h)
+					self:SetVisible(false)
+				else self:SetHeight(label_timer_h * percent) end
+			end
+			
+			self:SetText(
+				tostring(
+					math.max(
+						math.floor(
+							self.Time - CurTime()
+						),
+						0
+					)
+				)
+			)
+		end
+		
+		label:SetActivity(false, CurTime() + 6)
+		
+		panel.LabelTimer = label
+	end
 	
 	function panel:Paint(width, height)
 		surface.SetDrawColor(color_background)
-		surface.DrawRect(0, 0, width, height)
+		surface.DrawRect(0, 0, width, label_timer_t)
 	end
 	
 	self.TeamPanel = panel
-	self.MDTeamPanel = panel
 	
 	return panel
 end
 
---only gets called if the panel was valid
-function GM:HUDOnRemoveTeamPanel(...) return true end
+function GM:HUDOnRemoveTeamPanel(...) return true end --only gets called if the panel was valid
 
-function GM:HUDTeamPanelUpdatePlayer(ply, ready, ready_timer)
-	print("updating", self.TeamPanel, self.MDTeamPanel)
+function GM:HUDTeamPanelGetHeaderText(wave_active, ready_allowed, ready)
+	--this lets servers make custom text on the header for adverts or whatever they want
+	if wave_active then return GetHostName() end
+	if not ready_allowed then return language.GetPhrase("mingedefense.ui.team.header.inactive") end
+	if ready then return language.GetPhrase("mingedefense.ui.team.header.ready") end
 	
+	--tell them how to ready up
+	local bind = input.LookupBinding("md_ready") or input.LookupBinding("gm_showspare2")
+	
+	if bind then return self:LangGetFormattedPhrase("mingedefense.ui.team.header.unready", {key = string.upper(bind)}) end
+	
+	return language.GetPhrase("mingedefense.ui.team.header.unbound")
+end
+
+function GM:HUDTeamPanelUpdateHeader(wave_active, ready_allowed, ...)
+	--cache them for when the team panel is made
+	local_ready_allowed = ready_allowed
+	local_wave_active = wave_active
+	
+	self.TeamPanel.MarqueeLabel:SetText(hook.Call("HUDTeamPanelGetHeaderText", self, wave_active, ready_allowed, ...))
+end
+
+function GM:HUDTeamPanelUpdatePlayer(ply, ready)
 	if self.TeamPanel then
 		local panel_player = self.TeamPanel.PanelPlayers.Players[ply]
 		
 		panel_player.Paint = ready and paint_ready or paint_unready
-		
-		print("we did it with", ply, ready)
-		
-		if ply == LocalPlayer() then self.TeamPanel.MarqueeLabel:SetText(header_text(ready, ready_timer)) else print("not local ply") end
 	end
 end
 
@@ -190,7 +263,7 @@ function GM:HUDTeamPanelCalculateVariables(width, height)
 	local count = math.max(player.GetCount(), 6)
 	local panel_max_w = width * 0.8
 	
-	panel_h = width * 0.04
+	panel_h = width * 0.05
 	panel_w = count * math.floor(panel_h * 0.75 - 4) + 6
 	
 	if panel_w > panel_max_w then
@@ -200,6 +273,14 @@ function GM:HUDTeamPanelCalculateVariables(width, height)
 	
 	panel_b = height - panel_h
 	panel_lr = (width - panel_w) * 0.5
+	
+	--docking margins
+	marquee_label_b = panel_h * 0.75
+	panel_players_b = panel_h * 0.2
+	panel_players_t = panel_h * 0.25
+	label_timer_h = panel_h * 0.2
+	label_timer_rl = (panel_w - (panel_h - panel_players_b - panel_players_t)) * 0.5
+	label_timer_t = panel_h * 0.8
 	
 	hook.Call("HUDCreateTeamPanel", self, LocalPlayer())
 end

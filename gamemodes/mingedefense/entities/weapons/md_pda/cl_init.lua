@@ -8,6 +8,9 @@ SWEP.Instructions = language.GetPhrase("#mingedefense.weapons.pda.instructions")
 SWEP.PrintName = language.GetPhrase("#mingedefense.weapons.pda")
 SWEP.Purpose = language.GetPhrase("#mingedefense.weapons.pda.purpose")
 
+--local variables
+local blur = true
+
 ----calculated variables
 	local frame_margin = 100
 	local frame_margin_double = frame_margin * 2
@@ -42,13 +45,18 @@ function SWEP:PostDrawViewModel(entity, weapon, ply)
 	--0.00572916666 is scaled to 11 / ScrW()
 	--0.00590277777 is scaled to 6.375 / ScrH()
 	--so the scale should be math.min(11 / ScrW(), 6.375 / ScrH())
+	local menu_panel = self.Menu
 	
-	if IsValid(self.Menu) and self.ScreenPos then
+	if IsValid(menu_panel) and self.ScreenPos then
 		local width, height = 11 / ScrW(), 6.375 / ScrH()
 		local scale = math.min(height, width)
 		
 		cam.Start3D2D(self.ScreenPos, self.ScreenAngle, scale)
-			self.Menu:PaintAt(frame_margin + (width - scale) * 0.5, frame_margin + (height - scale) * 0.5)
+			blur = false
+			
+			menu_panel:PaintAt(frame_margin + (width - scale) * 0.5, frame_margin + (height - scale) * 0.5)
+			
+			blur = true
 		cam.End3D2D()
 	end
 end
@@ -100,6 +108,7 @@ function SWEP:PreDrawViewModel(entity, weapon, ply)
 			
 			do --frame
 				frame = vgui.Create("DFrame", GetHUDPanel(), "MingeDefensePDA")
+				frame.ShouldBlur = true
 				
 				frame:SetBackgroundBlur(true)
 				frame:SetDraggable(false)
@@ -120,6 +129,10 @@ function SWEP:PreDrawViewModel(entity, weapon, ply)
 				end
 				
 				function frame:Paint(width, height)
+					local create_time = self.m_fCreateTime
+					
+					if blur then Derma_DrawBackgroundBlur(self, create_time - (SysTime() - create_time) * 6) end
+					
 					surface.SetDrawColor(0, 0, 0, 128)
 					surface.DrawRect(0, 0, width, height)
 				end

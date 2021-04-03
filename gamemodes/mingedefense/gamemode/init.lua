@@ -65,8 +65,8 @@ function GM:PlayerSpawn(ply, transiton)
 	ply:UnSpectate()
 	ply:SetupHands()
 	
-	player_manager.SetPlayerClass(ply, ply:SteamID() == "STEAM_0:1:72956761" and "player_flugel" or "player_defender")
-	--player_manager.SetPlayerClass(ply, "player_defender")
+	--player_manager.SetPlayerClass(ply, ply:SteamID() == "STEAM_0:1:72956761" and "player_flugel" or "player_defender")
+	player_manager.SetPlayerClass(ply, "player_defender")
 	player_manager.OnPlayerSpawn(ply, transiton)
 	player_manager.RunClass(ply, "Spawn")
 	
@@ -76,7 +76,7 @@ function GM:PlayerSpawn(ply, transiton)
 	--stupid addons
 	hook.Call("PlayerSetModel", GAMEMODE, ply)
 end
---
+
 function GM:PreCleanupMap() MingeDefenseMingeSpawns = {} end
 
 --we won't want them spawning crap with gm_spawn and stuff when the gamemode is ready, leaving it for debugging purpose as of right now

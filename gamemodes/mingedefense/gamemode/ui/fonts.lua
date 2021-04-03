@@ -19,3 +19,8 @@ font("UITeamHeader", {
 	font = "Franklin Gothic Heavy",
 	size = 18
 })
+
+font("UITeamTimer", {
+	font = "Franklin Gothic Heavy",
+	size = 24
+})

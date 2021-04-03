@@ -23,7 +23,7 @@ SWEP.Secondary = {
 --local vars
 local hull_maxs = Vector(6, 6, 6)
 local hull_mins = -hull_maxs
-local md_wrench_debug = CreateConVar("md_wrench_debug", "1", {FCVAR_DONTRECORD, FCVAR_REPLICATED, FCVAR_CHEAT}, "Debug the wrench hit scan.", 0, 1)
+--local md_wrench_debug = CreateConVar("md_wrench_debug", "1", {FCVAR_DONTRECORD, FCVAR_REPLICATED, FCVAR_CHEAT}, "Debug the wrench hit scan.", 0, 1)
 
 --swep functions
 function SWEP:Initialize() self:SetHoldType("melee") end
@@ -47,7 +47,7 @@ function SWEP:PrimaryAttack()
 	
 	local trace = util.TraceHull(trace_data)
 	
-	---[[
+	--[[
 	if IsFirstTimePredicted() and md_wrench_debug:GetBool() then
 		local angle = (trace_data.endpos - shoot_pos):Angle()
 		local color = SERVER and Color(0, 0, 255, 25) or Color(255, 0, 0, 25) -- equivalent of C++'s condition ? truevar : falsevar --just use and or, Either is not necessary
@@ -56,25 +56,25 @@ function SWEP:PrimaryAttack()
 		
 		debugoverlay.BoxAngles(shoot_pos, hull_mins, hull_maxs, angle, 4, Color(0, 255, 0, 25))
 		debugoverlay.BoxAngles(trace.HitPos, hull_mins, hull_maxs, trace.Normal:Angle(), 4, color)
-
+		
 		if IsValid(trace.Entity) then
 			--ahhhhhhhhhhhhhhhhhhh
 			debugoverlay.BoxAngles(trace.Entity:GetPos(), trace.Entity:OBBMins(), trace.Entity:OBBMaxs(), trace.Entity:GetAngles(), 4, color)
 		end
 	end --]]
-
+	
 	if trace.Hit then
 		activity = ACT_VM_HITCENTER
 		local sound_effect = "minge_defense/weapons/wrench/hit_world.wav"
-
+		
 		--or util.GetSurfaceInfo(trace.SurfaceProps.Name).Surface == SURF_HITBOX
 		if trace.MatType == MAT_FLESH then
 			--play a different sound when we hit flesh.
 			sound_effect = "minge_defense/weapons/wrench/hit_flesh_" .. math.random(4) .. ".wav"
 		end
-
+		
 		local hit_entity = trace.Entity
-
+		
 		if IsValid(hit_entity) and SERVER then
 			local damage_info = DamageInfo()
 			
@@ -87,10 +87,10 @@ function SWEP:PrimaryAttack()
 			
 			hit_entity:TakeDamageInfo(damage_info)
 		end
-
+		
 		-- Fake the impact effect
 		local impact_trace = util.TraceLine(trace_data)
-
+		
 		if impact_trace.Hit then
 			owner:FireBullets({
 				Src = trace.StartPos,
@@ -100,10 +100,10 @@ function SWEP:PrimaryAttack()
 				Damage = 0
 			})
 		end
-
+		
 		self:EmitSound(sound_effect)
 	else self:EmitSound("minge_defense/weapons/wrench/swing.wav") end
-
+	
 	self:SendWeaponAnim(activity)
 	self:SetNextPrimaryFire(CurTime() + 0.8)
 	self:SetNextIdleTime(CurTime() + self:SequenceDuration(self:SelectWeightedSequence(activity)))

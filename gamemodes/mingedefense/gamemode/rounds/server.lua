@@ -7,6 +7,7 @@ local current_wave
 local current_wave_data
 local current_wave_table
 local map = game.GetMap()
+local network_ready = false
 local network_ready_players = false
 local ready_allowed = false
 local ready_cooldown = true
@@ -165,12 +166,13 @@ function GM:RoundInitialize(difficulty)
 		ready_allowed = true
 		round_table = loaded_table
 		
-		hook.Call("RoundGetWaveTable", self, current_wave, true)
+		print("RoundGetWaveTable", hook.Call("RoundGetWaveTable", self, current_wave, true))
 		
 		--round_table
 	else
 		--there are no configs, this is likely because a map creator is making this map
 		
+		print("NO CONFIGS?!?!")
 	end
 end
 
@@ -187,6 +189,7 @@ function GM:RoundLoadConfiguration(difficulty)
 end
 
 function GM:RoundPlayerDisconnect(ply)
+	network_ready = true
 	network_ready_players = true
 	ready_players[ply] = nil
 end
@@ -198,6 +201,7 @@ function GM:RoundPlayerReady(ready_ply, ready)
 	local ply_count = 0
 	local ready_count = 0
 	
+	network_ready = true
 	network_ready_players = true
 	ready_players[ready_ply] = ready
 	
@@ -225,8 +229,16 @@ end
 function GM:RoundReady()
 	ready_allowed = false
 	ready_players = {}
+	ready_timer = true
 	
-	hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
+	
+	--hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
+end
+
+function GM:RoundSetTimer(enabled, hit_time)
+	network_ready = true
+	
+	
 end
 
 function GM:ShowSpare2(ply) ready_player(ply) end
@@ -237,16 +249,23 @@ concommand.Add("md_ready", function(ply, command, arguments, arguments_string) r
 
 --hooks
 hook.Add("Think", "minge_defense_round", function()
-	if network_ready_players then
-		network_ready_players = nil
-		
-		--we are counting down
-		
+	if network_ready then
 		net.Start("minge_defense_ready")
+		net.WriteBool(false) --wave active?
 		net.WriteBool(ready_allowed)
 		net.WriteBool(ready_timer)
-		net.WriteTable(ready_players)
+		net.WriteBool(network_ready_players)
+		
+		if network_ready_players then
+			network_ready_players = false
+			
+			net.WriteTable(ready_players)
+		end
+		
 		net.Broadcast()
+		
+		network_ready = false
+		network_ready_players = false
 	end
 end)
 
