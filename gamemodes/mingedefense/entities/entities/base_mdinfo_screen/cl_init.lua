@@ -67,7 +67,9 @@ function ENT:SetCalculatedBounds(off_x, off_y, width, height, scale)
 			Mins = world_off_vector
 		}
 		
-		GAMEMODE.PsychokineticEntities[self] = bounds
+		if GAMEMODE.PsychokineticEntities then GAMEMODE.PsychokineticEntities[self] = bounds
+		else GAMEMODE.PsychokineticEntities = {[self] = bounds} end
+		
 		self.PsychokineticBounds = bounds
 	end
 end

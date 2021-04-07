@@ -6,6 +6,7 @@ ENT.PrintName = "Minge Base" --required with this gamemode!
 ENT.ScriptedEntityType = "npcs"
 
 --custom to entity
+ENT.GenerateIcon = true
 ENT.ShirtVector = Vector(1, 1, 1)
 ENT.WeaponSkin = 1
 
@@ -26,13 +27,11 @@ ENT.IconCamera = {
 --entity functions
 function ENT:DrawIconModels() --does not exist after initialization
 	--THIS FUNCTION IS NOT GIVEN AN ENTITY, IT IS GIVEN THE WHOLE ENT TABLE
-	local color = self.ShirtVector
-	local model = ClientsideModel("models/player/kleiner.mdl", RENDERGROUP_OTHER)
-	
-	function model:GetPlayerColor() return color end
-	
-	model:DrawModel()
-	model:Remove()
+	if self.IconModels then
+		for index, model in ipairs(self.IconModels) do
+			model:DrawModel()
+		end
+	end
 end
 
 function ENT:DrawIconWeaponModels() --does not exist after initialization
@@ -48,9 +47,11 @@ function ENT:GetPlayerColor() return self.ShirtVector end
 function ENT:Initialize()
 	--these should never get called by the entity or with an entity
 	--they're meant to be called externally without an entity
-	self.DrawIconModels = nil
-	self.DrawIconWeaponModels = nil
-	self.IconCamera = nil
+	print(self.DrawIconModels)
+	print(self.DrawIconWeaponModels)
+	print(self.IconCamera)
+	print(self.ReleaseIconModels)
+	print(self.SetupIconModels)
 end
 
 function ENT:OnKilled(damage_force)
@@ -65,6 +66,27 @@ function ENT:OnRemove()
 	local weapon_entity = self.WeaponEntity
 	
 	if IsValid(weapon_entity) then weapon_entity:Remove() end
+end
+
+function ENT:ReleaseIconModels() --does not exist after initialization
+	--THIS FUNCTION IS NOT GIVEN AN ENTITY, IT IS GIVEN THE WHOLE ENT TABLE
+	if self.IconModels then
+		for index, model in ipairs(self.IconModels) do
+			model:Remove()
+		end
+	end
+	
+	self.IconModels = nil
+end
+
+function ENT:SetupIconModels() --does not exist after initialization
+	--THIS FUNCTION IS NOT GIVEN AN ENTITY, IT IS GIVEN THE WHOLE ENT TABLE
+	local color = self.ShirtVector
+	local model = ClientsideModel("models/player/kleiner.mdl", RENDERGROUP_OTHER)
+	
+	function model:GetPlayerColor() return color end
+	
+	self.IconModels = {model}
 end
 
 --net

@@ -26,7 +26,10 @@ resource.AddSingleFile("sound/minge_defense/weapons/wrench/hit_world.wav")
 resource.AddSingleFile("sound/minge_defense/weapons/wrench/swing.wav")
 
 util.AddNetworkString("minge_defense_player_init")
-util.AddNetworkString("minge_defense_url")
+util.AddNetworkString("minge_defense_player_load")
+
+--local variables
+local loading_players = {}
 
 --gamemode functions
 function GM:CreateEntityRagdoll(owner, ragdoll)
@@ -41,6 +44,8 @@ function GM:Initialize()
 end
 
 function GM:PlayerDisconnected(ply)
+	loading_players[ply] = nil
+	
 	--lets not make Round too greedy
 	hook.Call("RoundPlayerDisconnect", self, ply)
 end
@@ -48,9 +53,15 @@ end
 function GM:PlayerInitialSpawn(ply, ...)
 	BaseClass.PlayerInitialSpawn(self, ply, ...)
 	
+	loading_players[ply] = true
+end
+
+function GM:PlayerLoad(ply)
 	net.Start("minge_defense_player_init")
 	net.WriteEntity(ply)
 	net.Broadcast()
+	
+	if player.GetCount() == 1 then hook.Call("RoundInitialize", self, "normal") end
 end
 
 --[[
@@ -79,8 +90,22 @@ end
 
 function GM:PreCleanupMap() MingeDefenseMingeSpawns = {} end
 
+function GM:Tick()
+	--special crud
+	hook.Call("RoundTick", self)
+end
+
 --we won't want them spawning crap with gm_spawn and stuff when the gamemode is ready, leaving it for debugging purpose as of right now
 --function GM:PlayerSpawnObject(ply, model, skin) return false end
+
+--net
+net.Receive("minge_defense_player_load", function(length, ply)
+	if loading_players[ply] then
+		loading_players[ply] = nil
+		
+		hook.Call("PlayerLoad", GAMEMODE, ply)
+	else ErrorNoHaltWithStack("A player (", ply, ") tried to send a load net message but has yet to be spawned!") end
+end)
 
 --finish off with the rest of the scripts
 include("loader.lua")

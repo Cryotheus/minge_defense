@@ -11,12 +11,12 @@ function GM:WaveCalculateSpawns(spawn_group_id)
 	spawn_cursors[spawn_group_id] = 1
 	spawn_totals[spawn_group_id] = 0
 	
-	for index, entity in pairs(self.MingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
+	for index, entity in pairs(MingeDefenseMingeSpawns[spawn_group_id] or {}) do spawn_totals[spawn_group_id] = spawn_totals[spawn_group_id] + 1 end
 end
 
 function GM:WaveEnd(wave, wave_table, wave_start_time, wave_end_time)
 	--yarp
-	hook.Remove("Tick", "minge_defense_wave")
+	hook.Remove("RoundTick", "minge_defense_wave")
 	print("WaveEnd ran")
 	
 	if wave < wave_max then hook.Call("RoundGetWaveTable", self, wave + 1)
@@ -49,7 +49,7 @@ function GM:WaveStart(wave, wave_table, wave_groups, wave_order)
 	for index, spawn_group_id in pairs(wave_table.meta.spawn_groups) do hook.Call("WaveCalculateSpawns", self, spawn_group_id) end
 	
 	--wave clock
-	hook.Add("Tick", "minge_defense_wave", function()
+	hook.Add("RoundTick", "minge_defense_wave", function()
 		if wave_ending then
 			--check if all minges and enemies and stuff are dead
 			local all_dead = true

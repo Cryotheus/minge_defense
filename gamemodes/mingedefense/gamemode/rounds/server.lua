@@ -10,8 +10,9 @@ local map = game.GetMap()
 local network_ready = false
 local network_ready_players = false
 local ready_allowed = false
-local ready_cooldown = true
+local ready_cooldown = 1
 local ready_cooldowns = {}
+local ready_cooldowns_check = false
 local ready_players = {}
 local ready_timer = false
 local round_table
@@ -98,25 +99,25 @@ local function generate_wave_spawn_order(wave_table)
 end
 
 local function ready_player(ply, arguments)
-	local access = ready_allowed and IsValid(ply) and not (ready_cooldown and ready_cooldowns[ply])
+	if not ready_allowed then return ply:PrintMessage(HUD_PRINTCONSOLE, "Readying is not allowed right now.") end
+	if not IsValid(ply) then return ply:PrintMessage(HUD_PRINTCONSOLE, "Readying is not allowed as an invalid player... whatinthefuk?") end
+	if ready_cooldown and ready_cooldowns[ply] then return ply:PrintMessage(HUD_PRINTCONSOLE, "Please wait " .. ready_cooldowns[ply] - CurTime() .. " seconds before updating your ready status.") end
 	
-	if access then
-		local argument = arguments and arguments[1]
-		local ready = ready_players[ply]
-		local state
+	local argument = arguments and arguments[1]
+	local ready = ready_players[ply]
+	local state
+	
+	if argument then state = tobool(argument) end
+	if state == nil then state = not ready end
+	
+	if state ~= ready then
+		ply:PrintMessage(HUD_PRINTCONSOLE, state and "You are now ready." or "You are no longer ready.") 
 		
-		if argument then state = tobool(argument) end
-		if state == nil then state = not ready end
+		ready_cooldowns_check = true
+		ready_cooldowns[ply] = CurTime() + ready_cooldown
 		
-		if state ~= ready then
-			ply:PrintMessage(HUD_PRINTCONSOLE, state and "You are now ready." or "You are no longer ready.") 
-			
-			ready_cooldowns[ply] = true
-			
-			timer.Simple(1, function() if IsValid(ply) then ready_cooldowns[ply] = nil end end)
-			hook.Call("RoundPlayerReady", GAMEMODE, ply, state)
-		else ply:PrintMessage(HUD_PRINTCONSOLE, state and "You already marked yourself as ready, the state did not change." or "You already marked yourself as unready, the state did not change.") end
-	else ply:PrintMessage(HUD_PRINTCONSOLE, "Please wait before updating your ready status.") end
+		hook.Call("RoundPlayerReady", GAMEMODE, ply, state)
+	else ply:PrintMessage(HUD_PRINTCONSOLE, state and "You already marked yourself as ready, the state did not change." or "You already marked yourself as unready, the state did not change.") end
 end
 
 --[[local function process_wave_table(wave_table)
@@ -141,8 +142,6 @@ end
 
 function GM:RoundGetWaveTable(wave, force)
 	if force or wave ~= current_wave or not current_wave_table then
-		--current_wave_data
-		
 		current_wave = wave
 		current_wave_data = {hook.Call("RoundCalculateWave", self, wave, round_table)}
 		current_wave_table = table.remove(current_wave_data, 1)
@@ -179,6 +178,8 @@ end
 function GM:RoundLoadConfiguration(difficulty)
 	round_table = nil
 	
+	print("configuration load!", difficulty)
+	
 	for attempt, fetching_function in ipairs(fetching_functions) do
 		print("Attempting to fetch the wave table, attempt #" .. attempt .. ".")
 		
@@ -211,7 +212,7 @@ function GM:RoundPlayerReady(ready_ply, ready)
 		ply_count = ply_count + 1
 	end
 	
-	if ready_count >= ply_count then hook.Call("RoundReady", self)
+	if ready_count >= ply_count then hook.Call("RoundReady", self, true)
 	elseif ready_count > 0 then --TODO: make a convar for this, like what percent of players have to be ready before we can start the timer?
 		if ready_timer then
 			--decrease time on timer
@@ -219,36 +220,37 @@ function GM:RoundPlayerReady(ready_ply, ready)
 		else
 			--start timer
 			
+			hook.Call("RoundSetTimer", self, true, CurTime() + 90)
+			
 			ready_timer = true
+		end
+	else
+		if ready_timer then
+			hook.Call("RoundSetTimer", self, false)
 		end
 	end
 	
 	return ready_count
 end
 
-function GM:RoundReady()
+function GM:RoundReady(forced)
 	ready_allowed = false
 	ready_players = {}
 	ready_timer = true
 	
+	if forced then hook.Call("RoundSetTimer", self, true, CurTime() + 10) end
 	
-	--hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
+	hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
 end
 
 function GM:RoundSetTimer(enabled, hit_time)
 	network_ready = true
+	ready_timer = enabled or false
 	
-	
+	--???
 end
 
-function GM:ShowSpare2(ply) ready_player(ply) end
-
---commands
---TODO: figure out a way to localize this
-concommand.Add("md_ready", function(ply, command, arguments, arguments_string) ready_player(ply, arguments) end)
-
---hooks
-hook.Add("Think", "minge_defense_round", function()
+function GM:RoundTick()
 	if network_ready then
 		net.Start("minge_defense_ready")
 		net.WriteBool(false) --wave active?
@@ -267,6 +269,28 @@ hook.Add("Think", "minge_defense_round", function()
 		network_ready = false
 		network_ready_players = false
 	end
+	
+	if ready_cooldowns_check then
+		ready_cooldowns_check = false
+		local removals = {}
+		
+		--I need to do all cases like this, because removing entries from a large* table while it is be itterated over causes it to skip entries
+		--even if it is not sequential, it still skips
+		--*does it have to be large? seems to happen more frequently with large tables
+		for ply, expires in pairs(ready_cooldowns) do if CurTime() > expires then table.insert(removals, ply) end end
+		for index, ply in ipairs(removals) do ready_cooldowns[ply] = nil end
+	end
+end
+
+function GM:ShowSpare2(ply) ready_player(ply) end
+
+--commands
+--TODO: figure out a way to localize this
+concommand.Add("md_ready", function(ply, command, arguments, arguments_string) ready_player(ply, arguments) end)
+
+--hooks
+hook.Add("Think", "minge_defense_round", function()
+
 end)
 
 hook.Add("WaveEnd", "minge_defense_round", function() ready_allowed = true end)

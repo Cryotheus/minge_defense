@@ -6,8 +6,9 @@ local map_diagonal = 113512
 local psychokinesis_trace = {}
 
 --gamemode tables
---GM is NOT the same table as GAMEMODE 
-GM.PsychokineticEntities = GAMEMODE.PsychokineticEntities or {}
+--GM is NOT the same table as GAMEMODE
+if GAMEMODE then GM.PsychokineticEntities = GAMEMODE.PsychokineticEntities or {}
+else GM.PsychokineticEntities = {} end
 
 --gamemode functions
 function GM:CLPlayerInitialSpawn(ply)
@@ -34,7 +35,12 @@ function GM:Initialize()
 	BaseClass.Initialize(self)
 end
 
-function GM:InitPostEntity() hook.Call("LocalPlayerInitialized", self, LocalPlayer()) end
+function GM:InitPostEntity()
+	net.Start("minge_defense_player_load")
+	net.SendToServer()
+	
+	hook.Call("LocalPlayerInitialized", self, LocalPlayer())
+end
 
 --sorry single playing peeps, no compensation yet
 function GM:KeyPress(ply, key) if IsFirstTimePredicted() and key == IN_USE then self:PsychokineticUse(ply) end end
@@ -110,7 +116,11 @@ end)
 
 --net
 net.Receive("minge_defense_player_init", function() hook.Call("CLPlayerInitialSpawn", GAMEMODE, net.ReadEntity()) end)
-net.Receive("minge_defense_url", function() gui.OpenURL(net.ReadString()) end)
+
+net.Receive("minge_defense_player_load", function()
+	--nothing?
+	--huh.
+end)
 
 --finish off with the rest of the scripts
 include("loader.lua")
