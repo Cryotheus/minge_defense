@@ -47,11 +47,17 @@ function ENT:GetPlayerColor() return self.ShirtVector end
 function ENT:Initialize()
 	--these should never get called by the entity or with an entity
 	--they're meant to be called externally without an entity
-	print(self.DrawIconModels)
+	--[[print(self.DrawIconModels)
 	print(self.DrawIconWeaponModels)
 	print(self.IconCamera)
 	print(self.ReleaseIconModels)
-	print(self.SetupIconModels)
+	print(self.SetupIconModels)]]
+	
+	self.DrawIconModels = nil
+	self.DrawIconWeaponModels = nil
+	self.IconCamera = nil
+	self.ReleaseIconModels = nil
+	self.SetupIconModels = nil
 end
 
 function ENT:OnKilled(damage_force)

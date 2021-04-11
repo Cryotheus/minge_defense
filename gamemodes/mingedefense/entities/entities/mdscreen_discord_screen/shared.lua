@@ -1,5 +1,5 @@
 --part of entity structure
-ENT.Base = "base_mdinfo_screen"
+ENT.Base = "base_mdscreen"
 ENT.Type = "anim" --we can't use point entities because they don't render
 
 --custom to entity

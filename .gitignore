@@ -1,8 +1,8 @@
 # batch and exports
-*.bat
 *.gma
 *.tar.gz
+*.log
+*.prt
+*.vmx
 *.zip
-*.pdn
-lua/autorun/client/ccc_translator.lua
-lua/autorun/server/ccc_translator.lua
+*.bat

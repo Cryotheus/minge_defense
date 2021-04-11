@@ -7,9 +7,13 @@ local config = {
 	
 	--folders
 	global_functions = {client = 13},	--01 101
-	lang = {client = 21},				--10 101
 	
 	--folders with actual content
+	language = {
+		client = 21,	--10 101
+		server = 18,	--10 010
+	},
+	
 	player_class = {
 		player_defender = 23,	--10 111
 		player_flugel = 31,		--11 111
@@ -143,7 +147,7 @@ concommand.Add(reload_command, function(ply)
 	--is it possible to run a command from client and execute the serverside command when the command is shared?
 	if not IsValid(ply) or ply:IsSuperAdmin() or IsValid(LocalPlayer()) and ply == LocalPlayer() then
 		--put what you need before reloading here
-		hook.Call("ReloadScripts", self)
+		hook.Call("ReloadScripts", GAMEMODE)
 		--put what you need after reloading here
 	end
 end, nil, "Reload all " .. branding .. " scripts.")

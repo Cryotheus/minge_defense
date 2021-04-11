@@ -7,42 +7,5 @@
 
 	"settings"
 	{
-		1
-		{
-			"name"		"physgun_limited"
-			"text"		"limit_physgun"
-			"help"		"If enabled, the Physics Gun will not be able to pick up certain map entities"
-			"type"		"CheckBox"
-			"default"	"0"
-		}
-
-		2
-		{
-			"name"		"sbox_weapons"
-			"text"		"enable_weapons"
-			"help"		"If enabled, each player will receive default Half-Life 2 weapons on each spawn"
-			"type"		"CheckBox"
-			"default"	"1"
-			"singleplayer" "1"
-		}
-
-		3
-		{
-			"name"		"sbox_godmode"
-			"text"		"allow_god_mode"
-			"help"		"If enabled, all players will be invincible"
-			"type"		"CheckBox"
-			"default"	"0"
-			"singleplayer" "1"
-		}
-
-		23
-		{
-			"name"		"sbox_noclip"
-			"text"		"allow_noclip"
-			"help"		"If enabled, players will be able to use noclip"
-			"type"		"CheckBox"
-			"default"	"1"
-		}
 	}
 }

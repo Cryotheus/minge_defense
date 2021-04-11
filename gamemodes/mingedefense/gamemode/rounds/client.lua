@@ -8,7 +8,29 @@ local ready = false
 net.Receive("minge_defense_ready", function()
 	local game_mode = GAMEMODE
 	local local_ply = LocalPlayer()
+	local ready_players = game_mode.PlayersReady
 	
+	--debug
+	--game_mode.TeamPanel.LabelTimer:SetActivity(true, net.ReadFloat())
+	local itt = 0
+	
+	repeat
+		if itt > 255 then ErrorNoHaltWithStack("Reached maximum itteraions in ready players networked data!") break end
+		
+		itt = itt + 1
+		local ply = Entity(net.ReadUInt(8))
+		local ply_ready = net.ReadBool()
+		
+		--might be a bit confusing, but the key is calculated before the value
+		ready_players[ply] = ply_ready or nil
+		
+		hook.Call("HUDTeamPanelUpdatePlayer", game_mode, ply, ply_ready)
+	until net.ReadBool()
+	
+	ready = ready_players[local_ply] or false
+end)
+
+--[[
 	if net.ReadBool() then
 		for ply, ply_ready in pairs(game_mode.PlayersReady) do
 			if not ply_ready then
@@ -39,5 +61,9 @@ net.Receive("minge_defense_ready", function()
 		end
 		
 		hook.Call("HUDTeamPanelUpdateHeader", game_mode, false, ready_allowed, ready)
-	end
+]]
+
+net.Receive("minge_defense_timer", function()
+	if net.ReadBool() then GAMEMODE.TeamPanel.LabelTimer:SetActivity(true, net.ReadFloat())
+	else GAMEMODE.TeamPanel.LabelTimer:SetActivity(false) end
 end)

@@ -1,4 +1,5 @@
 util.AddNetworkString("minge_defense_ready")
+util.AddNetworkString("minge_defense_timer")
 util.AddNetworkString("minge_defense_wave_data")
 
 --local variables
@@ -7,15 +8,16 @@ local current_wave
 local current_wave_data
 local current_wave_table
 local map = game.GetMap()
-local network_ready = false
-local network_ready_players = false
 local ready_allowed = false
 local ready_cooldown = 1
-local ready_cooldowns = {}
-local ready_cooldowns_check = false
+local ready_cooldowns = false
 local ready_players = {}
 local ready_timer = false
 local round_table
+
+local ready_players_check = {}
+local ready_players_changed = false
+local ready_players_changed_count = 0
 
 --local table constants
 local fetching_functions = {
@@ -43,6 +45,25 @@ local function add_enemy(wave_group, enemy, count)
 	else wave_group[enemy] = (wave_group[enemy] or 0) + count end
 	
 	return wave_group
+end
+
+--local function change_ready_status(ply, ready, punish)
+local function change_ready_status(ply, ready, punish)
+	if ready_players_check[ply] then return false end
+	
+	ready_players[ply] = ready or nil
+	ready_players_check[ply] = true
+	ready_players_changed_count = ready_players_changed_count + 1
+	
+	if punish then
+		if ready_cooldowns then ready_cooldowns[ply] = CurTime() + ready_cooldown
+		else ready_cooldowns = {[ply] = CurTime() + ready_cooldown} end
+	end
+	
+	if ready_players_changed then table.insert(ready_players_changed, ply)
+	else ready_players_changed = {ply} end
+	
+	return true
 end
 
 local function generate_wave_spawn_order(wave_table)
@@ -98,10 +119,10 @@ local function generate_wave_spawn_order(wave_table)
 	return wave_groups, wave_order
 end
 
-local function ready_player(ply, arguments)
-	if not ready_allowed then return ply:PrintMessage(HUD_PRINTCONSOLE, "Readying is not allowed right now.") end
-	if not IsValid(ply) then return ply:PrintMessage(HUD_PRINTCONSOLE, "Readying is not allowed as an invalid player... whatinthefuk?") end
-	if ready_cooldown and ready_cooldowns[ply] then return ply:PrintMessage(HUD_PRINTCONSOLE, "Please wait " .. ready_cooldowns[ply] - CurTime() .. " seconds before updating your ready status.") end
+local function ready_player(ply, arguments) 
+	if not ready_allowed then return GAMEMODE:LanguageSend(ply, HUD_PRINTCONSOLE, "mingedefense.message.ready.disabled") end
+	if not IsValid(ply) then return GAMEMODE:LanguageSend(ply, HUD_PRINTCONSOLE, "mingedefense.message.ready.invalid") end
+	if ready_cooldown and ready_cooldowns and ready_cooldowns[ply] then return GAMEMODE:LanguageSendFormat(ply, HUD_PRINTCONSOLE, "mingedefense.message.ready.wait", {delay = ready_cooldowns[ply] - CurTime()}) end
 	
 	local argument = arguments and arguments[1]
 	local ready = ready_players[ply]
@@ -111,13 +132,22 @@ local function ready_player(ply, arguments)
 	if state == nil then state = not ready end
 	
 	if state ~= ready then
-		ply:PrintMessage(HUD_PRINTCONSOLE, state and "You are now ready." or "You are no longer ready.") 
-		
-		ready_cooldowns_check = true
-		ready_cooldowns[ply] = CurTime() + ready_cooldown
-		
+		GAMEMODE:LanguageSend(ply, HUD_PRINTCONSOLE, state and "mingedefense.message.ready" or "mingedefense.message.unready") 
 		hook.Call("RoundPlayerReady", GAMEMODE, ply, state)
-	else ply:PrintMessage(HUD_PRINTCONSOLE, state and "You already marked yourself as ready, the state did not change." or "You already marked yourself as unready, the state did not change.") end
+	else GAMEMODE:LanguageSend(ply, HUD_PRINTCONSOLE, state and "mingedefense.message.ready.unchanged" or "mingedefense.message.unready.unchanged") end
+end
+
+local function unready_all()
+	ready_players_changed = {}
+	ready_players_changed_count = 0
+	
+	for ply in pairs(ready_players) do
+		ready_players[ply] = nil
+		ready_players_check[ply] = true
+		ready_players_changed_count = ready_players_changed_count + 1
+		
+		table.insert(ready_players_changed, ply)
+	end
 end
 
 --[[local function process_wave_table(wave_table)
@@ -189,22 +219,16 @@ function GM:RoundLoadConfiguration(difficulty)
 	end
 end
 
-function GM:RoundPlayerDisconnect(ply)
-	network_ready = true
-	network_ready_players = true
-	ready_players[ply] = nil
-end
+function GM:RoundPlayerDisconnect(ply) change_ready_status(ply, false) end
 
 --TODO: add a count down from when a player marks themself ready to when 
-function GM:RoundPlayerReady(ready_ply, ready)
+function GM:RoundPlayerReady(ready_ply, ready, force)
 	if not ready_allowed then return nil end
 	
 	local ply_count = 0
 	local ready_count = 0
 	
-	network_ready = true
-	network_ready_players = true
-	ready_players[ready_ply] = ready
+	change_ready_status(ready_ply, ready, not force)
 	
 	for index, ply in ipairs(player.GetAll()) do
 		if ready_players[ply] then ready_count = ready_count + 1 end
@@ -235,50 +259,40 @@ end
 
 function GM:RoundReady(forced)
 	ready_allowed = false
-	ready_players = {}
 	ready_timer = true
 	
 	if forced then hook.Call("RoundSetTimer", self, true, CurTime() + 10) end
 	
 	hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
+	unready_all()
 end
 
 function GM:RoundSetTimer(enabled, hit_time)
-	network_ready = true
+	--more here!
 	ready_timer = enabled or false
-	
-	--???
 end
 
 function GM:RoundTick()
-	if network_ready then
+	if ready_players_changed then
 		net.Start("minge_defense_ready")
-		net.WriteBool(false) --wave active?
-		net.WriteBool(ready_allowed)
-		net.WriteBool(ready_timer)
-		net.WriteBool(network_ready_players)
 		
-		if network_ready_players then
-			network_ready_players = false
-			
-			net.WriteTable(ready_players)
+		for index, ply in ipairs(ready_players_changed) do
+			net.WriteUInt(index, 8)
+			net.WriteBool(ready_players[ply] or false)
+			net.WriteBool(index == ready_players_changed_count)
 		end
 		
-		net.Broadcast()
+		ready_players_check = {}
+		ready_players_changed = false
+		ready_players_changed_count = 0
 		
-		network_ready = false
-		network_ready_players = false
+		net.Broadcast()
 	end
 	
-	if ready_cooldowns_check then
-		ready_cooldowns_check = false
-		local removals = {}
-		
-		--I need to do all cases like this, because removing entries from a large* table while it is be itterated over causes it to skip entries
-		--even if it is not sequential, it still skips
-		--*does it have to be large? seems to happen more frequently with large tables
+	if ready_cooldowns then
 		for ply, expires in pairs(ready_cooldowns) do if CurTime() > expires then table.insert(removals, ply) end end
-		for index, ply in ipairs(removals) do ready_cooldowns[ply] = nil end
+		
+		ready_cooldowns = false
 	end
 end
 

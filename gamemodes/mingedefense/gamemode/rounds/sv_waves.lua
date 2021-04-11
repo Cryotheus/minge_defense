@@ -1,4 +1,5 @@
 --holds tables by mdgroupid which contains a table of positions referenced by their entity index
+GM.WaveActive = false
 MingeDefenseMingeSpawns = MingeDefenseMingeSpawns or {}
 
 --locals
@@ -18,6 +19,8 @@ function GM:WaveEnd(wave, wave_table, wave_start_time, wave_end_time)
 	--yarp
 	hook.Remove("RoundTick", "minge_defense_wave")
 	print("WaveEnd ran")
+	
+	self.WaveActive = false
 	
 	if wave < wave_max then hook.Call("RoundGetWaveTable", self, wave + 1)
 	else hook.Call("RoundWin", self) end
@@ -48,6 +51,8 @@ function GM:WaveStart(wave, wave_table, wave_groups, wave_order)
 	--calculate the spawns for all spawn groups
 	for index, spawn_group_id in pairs(wave_table.meta.spawn_groups) do hook.Call("WaveCalculateSpawns", self, spawn_group_id) end
 	
+	self.WaveActive = true
+	
 	--wave clock
 	hook.Add("RoundTick", "minge_defense_wave", function()
 		if wave_ending then
@@ -69,11 +74,11 @@ function GM:WaveStart(wave, wave_table, wave_groups, wave_order)
 				local wave_last_time = wave_next_time
 				wave_next_time = wave_order[wave_pointer]
 				
-				PrintMessage(HUD_PRINTTALK, string.format("Next event! Pointer: %i, times: %f (%f); %f", wave_pointer, wave_last_time, wave_time, wave_next_time or -1))
+				--PrintMessage(HUD_PRINTTALK, string.format("Next event! Pointer: %i, times: %f (%f); %f", wave_pointer, wave_last_time, wave_time, wave_next_time or -1))
 				
 				--if wave_next_time is nil that means we did all the events
 				if wave_next_time then
-					PrintMessage(HUD_PRINTTALK, "Spawning minges.")
+					--PrintMessage(HUD_PRINTTALK, "Spawning minges.")
 					
 					--perform the event, mainly spawning minges
 					for enemy, count in pairs(wave_groups[wave_last_time]) do hook.Call("WaveSpawn", self, enemy, count, "generic") end

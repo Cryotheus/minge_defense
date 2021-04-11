@@ -219,7 +219,7 @@ function GM:HUDTeamPanelGetHeaderText(wave_active, ready_allowed, ready)
 	--tell them how to ready up
 	local bind = input.LookupBinding("md_ready") or input.LookupBinding("gm_showspare2")
 	
-	if bind then return self:LangGetFormattedPhrase("mingedefense.ui.team.header.unready", {key = string.upper(bind)}) end
+	if bind then return self:LanguageFormat("mingedefense.ui.team.header.unready", {key = string.upper(bind)}) end
 	
 	return language.GetPhrase("mingedefense.ui.team.header.unbound")
 end

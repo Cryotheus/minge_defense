@@ -49,7 +49,8 @@ function ENT:SpawnMinge(minge_class)
 	
 	minge:SetPos(self:GetPos())
 	minge:Spawn()
-	print("box", minge:GetCollisionBounds())
+	
+	return minge
 end
 
 --check if we can spawn them, and if so, pop queue

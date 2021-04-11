@@ -66,8 +66,6 @@ function ENT:CreatePath() self.Path:Compute(self, self.TargetPos) end
 function ENT:EmitVOSound(choices, max_index) self:EmitSound(choices[math.random(max_index)], 60, math.random(190, 200), 1, CHAN_VOICE) end
 
 function ENT:HandleStuck()
-	print(self, "got stuck")
-	
 	self.Stuck = true
 	
 	self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
@@ -183,8 +181,6 @@ function ENT:Think()
 		
 		if not (IsValid(trace_entity) and trace_entity.IsMinge) then
 			self:SetSolidMask(MASK_NPCSOLID)
-			
-			print(self, "we're not stuck anymore")
 			
 			self.Stuck = false
 		end

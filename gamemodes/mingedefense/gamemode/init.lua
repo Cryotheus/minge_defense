@@ -32,10 +32,7 @@ util.AddNetworkString("minge_defense_player_load")
 local loading_players = {}
 
 --gamemode functions
-function GM:CreateEntityRagdoll(owner, ragdoll)
-	--
-	PrintMessage(HUD_PRINTTALK, "Ragdoll created. " .. tostring(owner) .. ", " .. tostring(ragdoll))
-end
+--function GM:CreateEntityRagdoll(owner, ragdoll) end
 
 function GM:Initialize()
 	print("Initialized gamemode by provided function. (Server)")

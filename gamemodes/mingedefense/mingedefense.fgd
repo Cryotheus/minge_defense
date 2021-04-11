@@ -1,15 +1,15 @@
 @include "base.fgd" 
 
-@PointClass size(0 -96 -54, 1 96 54) base(Targetname, Parentname, Origin, Angles) = mdinfo_wave_screen :
+@PointClass base(Targetname, Parentname, Origin, Angles) iconsprite("minge_defense/editor/mdscreen.vmt") = mdscreen_wave_screen :
 	"Minge Defense wave info screen. Create a 3D2D VGUI panel with info about the active and upcoming wave."
 [
 
 ]
 
-@PointClass size(0 -16 -9, 1 16 9) base(Targetname, Parentname, Origin, Angles) = mdinfo_discord_screen :
+@PointClass base(Targetname, Parentname, Origin, Angles) iconsprite("minge_defense/editor/mdscreen.vmt") = mdscreen_discord_screen :
 	"Minge Defense Discord screen. Create a 3D2D VGUI panel with info about the Department of Minge Defense discord."
 [
-	discordurl(string) : "Discord URL" : : "WORK IN PROGRESS, DOES NOT FUNCTION CURRENTLY. Discord URL to used for inviting, this is not for the visual."
+	discordurl(string) : "Discord URL" : : "WORK IN PROGRESS, DOES NOT FUNCTION CURRENTLY. Discord URL to be used for inviting, this is not for the visual."
 ]
 
 @PointClass base(Targetname, Parentname, Origin, Angles) iconsprite("minge_defense/editor/mdinfo_path_target.vmt") = mdinfo_path_target :
