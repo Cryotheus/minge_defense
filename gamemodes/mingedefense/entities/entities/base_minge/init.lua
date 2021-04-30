@@ -93,11 +93,13 @@ function ENT:Initialize()
 	self.DeathSoundCount = #self.DeathSounds
 	
 	--weapon
-	local weapon = ents.Create(self.WeaponClass)
-	weapon.Minge = self
-	self.WeaponEntity = weapon
-	
-	weapon:Spawn()
+	if self.WeaponClass then
+		local weapon = ents.Create(self.WeaponClass)
+		weapon.Minge = self
+		self.WeaponEntity = weapon
+		
+		weapon:Spawn()
+	end
 end
 
 function ENT:OnContact(entity)

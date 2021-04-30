@@ -55,7 +55,7 @@ end
 
 function GM:PlayerLoad(ply)
 	net.Start("minge_defense_player_init")
-	net.WriteEntity(ply)
+	net.WriteUInt(ply:EntIndex(), 8)
 	net.Broadcast()
 	
 	if player.GetCount() == 1 then hook.Call("RoundInitialize", self, "normal") end
@@ -83,11 +83,19 @@ function GM:PlayerSpawn(ply, transiton)
 	
 	--stupid addons
 	hook.Call("PlayerSetModel", GAMEMODE, ply)
+	
+	if ply:IsBot() then
+		net.Start("minge_defense_player_init")
+		net.WriteUInt(ply:EntIndex(), 8)
+		net.Broadcast()
+	end
 end
 
 function GM:PreCleanupMap() MingeDefenseMingeSpawns = {} end
 
 function GM:Tick()
+	BaseClass.Initialize(self)
+	
 	--special crud
 	hook.Call("RoundTick", self)
 end
@@ -101,7 +109,7 @@ net.Receive("minge_defense_player_load", function(length, ply)
 		loading_players[ply] = nil
 		
 		hook.Call("PlayerLoad", GAMEMODE, ply)
-	else ErrorNoHaltWithStack("A player (", ply, ") tried to send a load net message but has yet to be spawned!") end
+	else ErrorNoHaltWithStack("A player (", ply, ") tried to send a load net message but has yet to be spawned! It is possible that they are cheating.") end
 end)
 
 --finish off with the rest of the scripts

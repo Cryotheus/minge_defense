@@ -18,7 +18,7 @@ function GM:HUDPaint()
 	
 	if IsValid(ply) then
 		--more?
-		hook.Call("HUDDrawStatus", self, ply)
+		--hook.Call("HUDDrawStatus", self, ply)
 	end
 end
 
@@ -27,8 +27,8 @@ function GM:HUDCalculateVariables(width, height, old_width, old_height, local_pl
 	--calculate you variables for the HUD here
 	ply = IsValid(ply) and ply or local_ply
 	
-	hook.Call("HUDStatusCalculateVariables", self, width, height, old_width, old_height, ply)
-	hook.Call("HUDTeamPanelCalculateVariables", self, width, height, old_width, old_height, ply)
+	hook.Call("HUDStatusCalculateVariables", self, width, height, old_width, old_height, local_ply)
+	hook.Call("HUDTeamPanelCalculateVariables", self, width, height, old_width, old_height, local_ply)
 end
 
 function GM:HUDShouldDraw(name) return not blocked_elements[name] end

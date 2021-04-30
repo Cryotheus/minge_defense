@@ -4,9 +4,9 @@ SWEP.Author = "Cryotheum"
 SWEP.Category = "Minge Defense"
 SWEP.DrawAmmo = false
 SWEP.DrawCrosshair = false
-SWEP.Instructions = language.GetPhrase("#mingedefense.weapons.pda.instructions")
-SWEP.PrintName = language.GetPhrase("#mingedefense.weapons.pda")
-SWEP.Purpose = language.GetPhrase("#mingedefense.weapons.pda.purpose")
+SWEP.Instructions = "#mingedefense.weapons.pda.instructions"
+SWEP.PrintName = language.GetPhrase("mingedefense.weapons.pda")
+SWEP.Purpose = "#mingedefense.weapons.pda.purpose"
 
 --local variables
 local blur = true

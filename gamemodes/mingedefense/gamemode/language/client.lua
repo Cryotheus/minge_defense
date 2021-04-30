@@ -30,8 +30,6 @@ end
 function GM:LanguageMessage(enumeration, key, phrases)
 	local text = phrases and hook.Call("LanguageFormat", self, key, phrases) or language.GetPhrase(key)
 	
-	print("attempting message", enumeration, key, phrases)
-	
 	return enumerated_message_functions[enumeration](text)
 end
 

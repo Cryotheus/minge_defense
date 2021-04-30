@@ -48,4 +48,6 @@ function PANEL:SetText(text)
 	self.Text = text or "Marquee Label"
 end
 
+function PANEL:SetTextSeperator(text) self.TextSeperator = string.Left(text, 1) == "#" and language.GetPhrase(text) or text end
+
 derma.DefineControl("MDMarqueeLabel", "Scrolling marquee text label.", PANEL, "DPanel")

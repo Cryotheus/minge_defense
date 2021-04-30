@@ -1,5 +1,6 @@
 util.AddNetworkString("minge_defense_ready")
-util.AddNetworkString("minge_defense_timer")
+util.AddNetworkString("minge_defense_ready_capabilities")
+util.AddNetworkString("minge_defense_ready_timer")
 util.AddNetworkString("minge_defense_wave_data")
 
 --local variables
@@ -12,8 +13,11 @@ local ready_allowed = false
 local ready_cooldown = 1
 local ready_cooldowns = false
 local ready_players = {}
+local ready_players_unique = {}
 local ready_timer = false
+local ready_timer_sync = false
 local round_table
+local sync_capabilities = false
 
 local ready_players_check = {}
 local ready_players_changed = false
@@ -54,6 +58,7 @@ local function change_ready_status(ply, ready, punish)
 	ready_players[ply] = ready or nil
 	ready_players_check[ply] = true
 	ready_players_changed_count = ready_players_changed_count + 1
+	ready_players_unique[ply] = true
 	
 	if punish then
 		if ready_cooldowns then ready_cooldowns[ply] = CurTime() + ready_cooldown
@@ -150,6 +155,12 @@ local function unready_all()
 	end
 end
 
+local function unready_all_full()
+	unready_all()
+	
+	ready_players_unique = {}
+end
+
 --[[local function process_wave_table(wave_table)
 	local meta = wave_table.meta
 	
@@ -181,6 +192,8 @@ function GM:RoundGetWaveTable(wave, force)
 end
 
 function GM:RoundInitialize(difficulty)
+	difficulty = difficulty or "normal"
+	
 	current_difficulty = difficulty
 	current_wave = 1
 	local loaded_table, halt = hook.Call("RoundLoadConfiguration", self, difficulty)
@@ -194,8 +207,11 @@ function GM:RoundInitialize(difficulty)
 		--continue normally
 		ready_allowed = true
 		round_table = loaded_table
+		sync_capabilities = true
 		
+		print("RoundInitialize hook called, setting sync_capabilities")
 		print("RoundGetWaveTable", hook.Call("RoundGetWaveTable", self, current_wave, true))
+		unready_all_full()
 		
 		--round_table
 	else
@@ -225,6 +241,7 @@ function GM:RoundPlayerDisconnect(ply) change_ready_status(ply, false) end
 function GM:RoundPlayerReady(ready_ply, ready, force)
 	if not ready_allowed then return nil end
 	
+	local first_ready = not ready_players_unique[ready_ply]
 	local ply_count = 0
 	local ready_count = 0
 	
@@ -238,42 +255,69 @@ function GM:RoundPlayerReady(ready_ply, ready, force)
 	
 	if ready_count >= ply_count then hook.Call("RoundReady", self, true)
 	elseif ready_count > 0 then --TODO: make a convar for this, like what percent of players have to be ready before we can start the timer?
-		if ready_timer then
-			--decrease time on timer
-			
-		else
-			--start timer
-			
-			hook.Call("RoundSetTimer", self, true, CurTime() + 90)
-			
-			ready_timer = true
-		end
-	else
-		if ready_timer then
-			hook.Call("RoundSetTimer", self, false)
-		end
-	end
+		if ready_timer then if first_ready then hook.Call("RoundTimerDecrease", self) end
+		else hook.Call("RoundTimerStart", self) end
+	elseif ready_timer then
+		ready_players_unique = {}
+		
+		hook.Call("RoundTimerSet", self, false)
+	end --stop the timer
 	
 	return ready_count
 end
 
-function GM:RoundReady(forced)
+function GM:RoundReady(force_timer)
+	print("Call to RoundReady")
+	
+	if force_timer or round_preparation then hook.Call("RoundTimerSet", self, CurTime() + 10) end
+	
 	ready_allowed = false
-	ready_timer = true
-	
-	if forced then hook.Call("RoundSetTimer", self, true, CurTime() + 10) end
-	
-	hook.Call("WaveStart", self, current_wave, current_wave_table, unpack(current_wave_data))
-	unready_all()
+	round_preparation = false
+	sync_capabilities = true print("RoundReady hook called, setting sync_capabilities")
 end
 
-function GM:RoundSetTimer(enabled, hit_time)
-	--more here!
-	ready_timer = enabled or false
+function GM:RoundStartWave(wave)
+	hook.Call("WaveStart", self, wave, hook.Call("RoundGetWaveTable", self, wave, false))
+	unready_all_full()
+	
+	ready_timer = false
+	ready_timer_sync = true
+end
+
+function GM:RoundTimerCalculateDecreasedTime()
+	if round_preparation then
+		--TODO: Convars for this
+		return math.Clamp(ready_timer - 10, 10, ready_timer * 0.8)
+	end
+	
+	return ready_timer
+end
+
+function GM:RoundTimerDecrease() hook.Call("RoundTimerSet", self, hook.Call("RoundTimerCalculateDecreasedTime", self)) end
+
+function GM:RoundTimerSet(hit_time)
+	print("call to RoundTimerSet with", hit_time)
+	
+	if hit_time ~= ready_timer then print("syncing...") ready_timer_sync = true end
+	
+	ready_timer = hit_time or false
+end
+
+function GM:RoundTimerStart()
+	round_preparation = true
+	sync_capabilities = true print("RoundTimerStart hook called, setting sync_capabilities")
+	
+	hook.Call("RoundTimerSet", self, CurTime() + 90)
 end
 
 function GM:RoundTick()
-	if ready_players_changed then
+	if ready_cooldowns then
+		for ply, expires in pairs(ready_cooldowns) do if CurTime() > expires then table.insert(removals, ply) end end
+		
+		ready_cooldowns = false
+	end
+	
+	if ready_players_changed then --net
 		net.Start("minge_defense_ready")
 		
 		for index, ply in ipairs(ready_players_changed) do
@@ -289,10 +333,37 @@ function GM:RoundTick()
 		net.Broadcast()
 	end
 	
-	if ready_cooldowns then
-		for ply, expires in pairs(ready_cooldowns) do if CurTime() > expires then table.insert(removals, ply) end end
+	if ready_timer then
+		local cur_time = CurTime()
 		
-		ready_cooldowns = false
+		if cur_time > ready_timer then hook.Call("RoundStartWave", self, current_wave)
+		elseif round_preparation and cur_time > ready_timer - 10 then hook.Call("RoundReady", self) end
+	end
+	
+	if ready_timer_sync then --net
+		net.Start("minge_defense_ready_timer")
+		
+		if ready_timer then
+			print("made minge_defense_ready_timer sync with timer info")
+			
+			net.WriteBool(true)
+			net.WriteFloat(CurTime())
+			net.WriteFloat(ready_timer)
+		else print("made minge_defense_ready_timer sync (disabled)") net.WriteBool(false) end
+		
+		net.Broadcast()
+		
+		ready_timer_sync = false
+	end
+	
+	if sync_capabilities then --net
+		net.Start("minge_defense_ready_capabilities")
+		net.WriteBool(ready_allowed)
+		net.WriteBool(round_preparation)
+		net.WriteBool(self.WaveActive)
+		net.Broadcast()
+		
+		sync_capabilities = false
 	end
 end
 
@@ -303,8 +374,10 @@ function GM:ShowSpare2(ply) ready_player(ply) end
 concommand.Add("md_ready", function(ply, command, arguments, arguments_string) ready_player(ply, arguments) end)
 
 --hooks
-hook.Add("Think", "minge_defense_round", function()
-
+hook.Add("WaveEnd", "minge_defense_round", function()
+	current_wave = current_wave + 1
+	ready_allowed = true
+	sync_capabilities = true print("WaveEnd hook called, setting sync_capabilities")
 end)
 
-hook.Add("WaveEnd", "minge_defense_round", function() ready_allowed = true end)
+hook.Add("WaveStarted", "minge_defense_round", function() sync_capabilities = true print("WaveStarted hook called, setting sync_capabilities") end)

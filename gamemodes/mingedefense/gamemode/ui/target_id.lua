@@ -3,7 +3,7 @@ local font_small = "TargetIDSmall"
 local spacing = 4
 
 ----colors
-	local associated_colors = MingeDefenseColors.HUD.TargetID
+	local associated_colors = GM.UIColors.HUD.TargetID
 	local color_shadow_shallow = associated_colors.ShadowShallow
 	local color_shadow_deep = associated_colors.ShadowDeep
 	local color_text = associated_colors.Text

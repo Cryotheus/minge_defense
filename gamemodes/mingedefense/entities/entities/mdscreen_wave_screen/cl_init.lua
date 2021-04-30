@@ -7,7 +7,7 @@ ENT.PrintName = "Minge Defense Wave Info Screen"
 ENT.PanelScale = 0.2
 
 --locals
-local associated_colors = MingeDefenseColors.Screens.Wave
+local associated_colors = GAMEMODE.UIColors.Screens.Wave
 local color_background = associated_colors.Background
 local logo = Material("minge_defense/gui/logo512.png")
 

@@ -36,6 +36,8 @@ function GM:Initialize()
 end
 
 function GM:InitPostEntity()
+	BaseClass.InitPostEntity(self)
+	
 	net.Start("minge_defense_player_load")
 	net.SendToServer()
 	
@@ -47,10 +49,58 @@ function GM:KeyPress(ply, key) if IsFirstTimePredicted() and key == IN_USE then 
 
 function GM:LocalPlayerInitialized(ply)
 	hook.Call("HUDCalculateVariables", self, ScrW(), ScrH(), nil, nil, ply)
-	hook.Call("HUDCreateTeamPanel", GAMEMODE, ply)
+	hook.Call("HUDCreateStatusPanel", self, ply)
+	hook.Call("HUDCreateTeamPanel", self)
 end
 
-function GM:OnReloaded() hook.Call("HUDCalculateVariables", self, ScrW(), ScrH()) end
+function GM:ContextMenuCreated(context_menu)
+	--this function is provided by sandbox for overriding purposes
+	--thank you garry!
+	context_menu.AddX = context_menu.Add
+	
+	--unfortunately, ContextMenuCreated is called before DIconLayout is  
+	function context_menu:Add(name, ...)
+		local panel = self:AddX(name, ...)
+		
+		if name == "DIconLayout" then
+			--restore the function, and store the panel
+			self.Add = self.AddX
+			self.AddX = nil
+			self.IconLayout = panel
+		end
+		
+		return panel
+	end
+end
+
+function GM:OnContextMenuClose()
+	BaseClass.OnContextMenuClose(self)
+	
+	local hud_panel = GetHUDPanel()
+	local status_panel = self.StatusPanel
+	local team_panel = self.TeamPanel
+	
+	status_panel:SetParent(hud_panel)
+	team_panel:SetParent(hud_panel)
+end
+
+function GM:OnContextMenuOpen()
+	BaseClass.OnContextMenuOpen(self)
+	
+	local context_menu = g_ContextMenu
+	local menu_bar = context_menu:Find("DMenuBar")
+	local status_panel = self.StatusPanel
+	local team_panel = self.TeamPanel
+	
+	menu_bar:SetVisible(false)
+	status_panel:SetParent(context_menu)
+	team_panel:SetParent(context_menu)
+end
+
+function GM:OnReloaded()
+	hook.Call("HUDCalculateVariables", self, ScrW(), ScrH())
+	hook.Call("HUDCreateStatusPanel", self, LocalPlayer())
+end
 
 function GM:OnScreenSizeChanged(old_width, old_height)
 	local width, height = ScrW(), ScrH()
@@ -115,11 +165,10 @@ hook.Add("Think", "minge_defense_minge_icons", function()
 end)
 
 --net
-net.Receive("minge_defense_player_init", function() hook.Call("CLPlayerInitialSpawn", GAMEMODE, net.ReadEntity()) end)
-
-net.Receive("minge_defense_player_load", function()
-	--nothing?
-	--huh.
+net.Receive("minge_defense_player_init", function()
+	local ent_index = net.ReadUInt(8)
+	
+	hook.Call("CLPlayerInitialSpawn", GAMEMODE, Entity(ent_index), ent_index)
 end)
 
 --finish off with the rest of the scripts

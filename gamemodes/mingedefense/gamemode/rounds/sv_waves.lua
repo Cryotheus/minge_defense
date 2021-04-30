@@ -93,4 +93,8 @@ function GM:WaveStart(wave, wave_table, wave_groups, wave_order)
 			end
 		end
 	end)
+	
+	hook.Call("WaveStarted", self, wave, wave_table, wave_groups, wave_order)
 end
+
+function GM:WaveStarted(wave, wave_table, wave_groups, wave_order) end

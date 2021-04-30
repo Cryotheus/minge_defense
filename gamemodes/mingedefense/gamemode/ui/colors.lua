@@ -1,7 +1,8 @@
 --defines a global table of colors
 local temp = 0.6
 
-MingeDefenseColors = {
+--globals
+GM.UIColors = {
 	--the md logo's colors
 	Logo = {
 		Red = Color(255, 1, 1),
@@ -15,7 +16,9 @@ MingeDefenseColors = {
 			Armor = Color(128, 255, 128),
 			Background = Color(20, 20, 20, 96),
 			Health = Color(192, 32, 32),
-			HealthBackground = Color(115, 19, 19)
+			HealthBackground = Color(115, 19, 19),
+			Metal = Color(64, 192, 64),
+			MetalBackground = Color(12, 115, 12)
 		},
 		
 		TargetID = {
@@ -40,4 +43,8 @@ MingeDefenseColors = {
 	},
 }
 
-function GM:ColorsLoaded() end
+--gamemode functions
+function GM:ColorsLoaded(colors) end
+
+--hooks
+hook.Call("ColorsLoaded", GM, GM.UIColors)

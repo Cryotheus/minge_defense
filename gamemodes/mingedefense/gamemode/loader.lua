@@ -20,8 +20,11 @@ local config = {
 	},
 	
 	ui = {
-		panels = {
-			marquee_label = 21	--010 101
+		panels = {marquee_label = 21},	--010 101
+		
+		status_panels = {
+			health = 12,	--1 100
+			metal = 12		--1 100
 		},
 		
 		colors = 21,	--010 101
@@ -116,6 +119,7 @@ local function load_map() end
 
 --gamemode functions
 function GM:LoadScripts(reload)
+	load_order = {}
 	local load_start_time = SysTime()
 	
 	MsgC(color_generic, "\n\\\\\\ ", color_significant, branding, color_generic, " ///\n\nConstructing load order...\n")
@@ -144,8 +148,9 @@ function GM:ReloadScripts() hook.Call("LoadScripts", self, true) end
 
 --concommands
 concommand.Add(reload_command, function(ply)
+	--broke?
 	--is it possible to run a command from client and execute the serverside command when the command is shared?
-	if not IsValid(ply) or ply:IsSuperAdmin() or IsValid(LocalPlayer()) and ply == LocalPlayer() then
+	if not IsValid(ply) or IsValid(LocalPlayer()) and ply == LocalPlayer() then
 		--put what you need before reloading here
 		hook.Call("ReloadScripts", GAMEMODE)
 		--put what you need after reloading here

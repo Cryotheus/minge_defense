@@ -2,6 +2,26 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
 
+--entity functions
+function ENT:Drop(damage_force)
+	local physics = self.Physics
+	self.Dropped = true
+	
+	self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	self:SetParent()
+	
+	self:SetAngles(self.Minge:LocalToWorldAngles(self.WeaponOffsetAngles))
+	self:SetPos(self.Minge:LocalToWorld(self.WeaponOffsetPos))
+	
+	physics:EnableMotion(true)
+	
+	self:PhysWake()
+	
+	physics:SetVelocity(damage_force / self.WeaponMass * 0.9)
+	
+	timer.Simple(5, function() if IsValid(self) then self:Remove() end end)
+end
+
 function ENT:Initialize()
 	--more here?
 	self:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)

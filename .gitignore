@@ -1,8 +1,10 @@
 # batch and exports
+*.bat
 *.gma
-*.tar.gz
 *.log
 *.prt
+*.sublime-project
+*.sublime-workspace
+*.tar.gz
 *.vmx
 *.zip
-*.bat

@@ -1,138 +1,142 @@
-print(" !!! !!! status.lua loaded")
-
---locals
-local material_shield = Material("minge_defense/hud/stripes.png", "noclamp")
-local material_shield_scale = 32 * 2 --it is 32x32 but we need a higher res one... I'm thinking 128x128
-local pi = math.pi
-
-----colors
-	local associated_colors = MingeDefenseColors.HUD.Status
-	local color_armor = associated_colors.Armor
-	local color_background = associated_colors.Background
-	local color_health = associated_colors.Health
-	local color_health_background = associated_colors.HealthBackground
-
-----localized functions
-	local fl_draw_SimpleText = draw.SimpleText
-	local fl_math_floor = math.floor
-	local fl_math_sin = math.sin
-	local fl_surface_DrawRect = surface.DrawRect
-	local fl_surface_DrawText = surface.DrawText
-	local fl_surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
-	local fl_surface_GetTextSize = surface.GetTextSize
-	local fl_surface_SetDrawColor = surface.SetDrawColor
-	local fl_surface_SetFont = surface.SetFont
-	local fl_surface_SetMaterial = surface.SetMaterial
-	local fl_surface_SetTextColor = surface.SetTextColor
-	local fl_surface_SetTextPos = surface.SetTextPos
-	local fl_surface = nil
+--in the future these will be derma panels
+--the status bar will be a sizable panel which automatically sizes to accommodate for appearing and disappearing panels
+--cached functions
 
 ----calculated variables
 	local error_px_half = 0.5 / 32 -- half pixel anticorrection for surface.DrawTexturedRectUV
 	local error_px_div = 1 - error_px_half * 2
-	local margin = 8
-	local money_h
-	local money_w
-	local money_y
-	local status_armor_bar_h
-	local status_armor_bar_w
-	local status_armor_bar_x
-	local status_armor_bar_y
+	local margin = 4
+	local margin_double = margin * 2
+	local margin_half = margin * 0.5
 	local status_bar_h
 	local status_bar_w
-	local status_bar_x
-	local status_bar_y
-	local status_h
-	local status_armor_margin = 4
-	local status_margin = 8
-	local status_w
-	local status_y
 
---local functions
-local function even_floor(value) return fl_math_floor(value * 0.5) * 2 end
+----colors
+	local associated_colors = GM.UIColors.HUD.Status
+	local color_background = associated_colors.Background
 
-local function draw_uv_texture(x, y, width, height, start_u, start_v, end_u, end_v)
-	fl_surface_DrawTexturedRectUV(
-		x,
-		y,
-		width,
-		height,
-		
-		(start_u - error_px_half) / error_px_div,
-		(start_v - error_px_half) / error_px_div,
-		(end_u - error_px_half) / error_px_div,
-		(end_v - error_px_half) / error_px_div
-	)
-end
+----localized functions
+	local fl_math_floor = math.floor
+	local fl_surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
+
+local supplies = {
+	DrawUVTexture = function(x, y, width, height, start_u, start_v, end_u, end_v)
+		fl_surface_DrawTexturedRectUV(
+			x,
+			y,
+			width,
+			height,
+			
+			(start_u - error_px_half) / error_px_div,
+			(start_v - error_px_half) / error_px_div,
+			(end_u - error_px_half) / error_px_div,
+			(end_v - error_px_half) / error_px_div
+		)
+	end,
+	
+	EvenFloor = function(value) return fl_math_floor(value * 0.5) * 2 end,
+	
+	Dimensions = {
+		Margin = margin,
+		MarginDouble = margin_double,
+		MarginHalf = margin_half
+	}
+}
 
 --gamemode functions
---TODO: cache text displayed so we dont keep translating health and armor to text
-function GM:HUDDrawStatus(ply)
-	--later, just make this hook start from InitPostEntity
-	local armor = ply:Armor()
-	local max_health = ply:GetMaxHealth()
-	local health = ply:Health()
-	local text
+--lua_run_cl hook.Call("HUDCreateStatusPanel", GAMEMODE, LocalPlayer())
+function GM:HUDCreateStatusPanel(ply)
+	hook.Call("HUDRemoveStatusPanel", self)
 	
-	if ply:Alive() then text = tostring(health)
-	else
-		armor = 0
-		text = "DEAD"
+	local panel_status = vgui.Create("DSizeToContents", GetHUDPanel(), "MingeDefenseStatus")
+	local panels = {}
+	local scr_w, scr_h = ScrW(), ScrH()
+	
+	panel_status:Dock(BOTTOM)
+	panel_status:DockMargin(4, 4, ScrW() * 0.85, 4)
+	panel_status:DockPadding(4, 0, 4, 4)
+	panel_status:SetZPos(10)
+	
+	function panel_status:Paint(width, height)
+		surface.SetDrawColor(color_background)
+		surface.DrawRect(0, 0, width, height)
 	end
 	
-	fl_surface_SetDrawColor(color_background)
-	fl_surface_DrawRect(margin, status_y, status_w, status_h)
+	function panel_status:PerformLayout(width, height) self:SizeToChildren(false, true) end
 	
-	fl_surface_SetDrawColor(color_health_background)
-	fl_surface_DrawRect(status_bar_x, status_bar_y, status_bar_w, status_bar_h)
+	for index, panel_name in ipairs(self.StatusPanels) do
+		local panel = vgui.Create(panel_name, panel_status)
+		
+		panel:CalculateVariables(scr_w, scr_h, scr_w, scr_h, ply)
+		panel:Dock(TOP)
+		panel:DockMargin(0, 4, 0, 0)
+		panel:SetHeight(panel.DockHeight or 32)
+		panel:InvalidateLayout(true)
+		
+		table.insert(panels, panel)
+	end
 	
-	fl_surface_SetDrawColor(color_health)
-	fl_surface_DrawRect(status_bar_x, status_bar_y, status_bar_w * health / max_health, status_bar_h)
-	
-	if armor > 0 then
-		local max_armor = ply:GetMaxArmor()
-		local real_time = RealTime()
-		local scaled_width = status_armor_bar_w * armor / max_armor
-		local scale_u, scale_v = scaled_width / material_shield_scale, status_armor_bar_h / material_shield_scale
-		local scroll = real_time * 0.5 % status_armor_bar_w
-		
-		local pulse = fl_math_sin(real_time * 4)
-		local pulse_rg = pulse * 20 + 215
-		
-		fl_surface_SetDrawColor(pulse_rg, pulse_rg, 255, pulse * 68 + 104)
-		fl_surface_SetMaterial(material_shield)
-		draw_uv_texture(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
-		
-		pulse = fl_math_sin(real_time * 4 + pi)
-		pulse_rg = pulse * 20 + 215
-		scroll = scroll + 0.25
-		
-		fl_surface_SetDrawColor(pulse_rg, pulse_rg, 255, pulse * 68 + 104)
-		draw_uv_texture(status_armor_bar_x, status_armor_bar_y, scaled_width, status_armor_bar_h, scroll, 0, scale_u + scroll, scale_v)
-		
-		fl_draw_SimpleText(text, "MingeDefenseUIStatusLarge", status_bar_x + status_bar_w * 0.5, status_armor_bar_y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-		fl_draw_SimpleText(tostring(armor), "MingeDefenseUIStatusSmall", status_bar_x + status_bar_w * 0.5, status_armor_bar_y + status_armor_bar_h, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-	else fl_draw_SimpleText(text, "MingeDefenseUIStatusLarge", status_bar_x + status_bar_w * 0.5, status_bar_y + status_bar_h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER) end
+	panel_status.Panels = panels
+	self.StatusPanel = panel_status
 end
 
-function GM:HUDStatusCalculateVariables(width, height)
-	local status_margin_double = status_margin * 2
-	local status_armor_margin_double = status_armor_margin * 2
-	local status_scale = even_floor(width * 0.15)
+function GM:HUDRemoveStatusPanel()
+	local existing_panels = {} 
 	
-	status_h = even_floor(status_scale * 0.15)
-	status_w = status_scale
-	status_y = height - status_h - margin
+	for index, panel in ipairs(GetHUDPanel():GetChildren()) do
+		if panel:GetName() == "MingeDefenseStatus" then
+			table.insert(existing_panels, panel)
+		end
+	end
 	
-	status_bar_h = status_h - status_margin_double
-	status_bar_w = status_w - status_margin_double
-	status_bar_x = margin + status_margin
-	status_bar_y = status_y + status_margin
+	hook.Call("HUDOnRemoveStatusPanel", self, unpack(existing_panels))
 	
-	status_armor_bar_h = status_h - status_armor_margin_double
-	status_armor_bar_w = status_w - status_armor_margin_double
-	status_armor_bar_x = margin + status_armor_margin
-	status_armor_bar_y = status_y + status_armor_margin
+	if table.IsEmpty(existing_panels) then return false end
+	for index, panel in ipairs(existing_panels) do panel:Remove() end
 	
-	money_h = status_h
+	self.StatusPanel = false
+	
+	return true
 end
+
+function GM:HUDStatusCalculateChildVariables(...) for index, panel in ipairs(self.StatusPanel.Panels) do panel:CalculateVariables(...) end end
+
+function GM:HUDStatusCalculateVariables(width, height, ...) --width, height, old_width, old_height, local_ply
+	local dimensions = supplies.Dimensions
+	--what
+	
+	if self.StatusPanel then hook.Call("HUDStatusCalculateChildVariables", self, width, height, ...) end
+end
+
+function GM:HUDStatusLoad()
+	print(" ]	Looking for status panels...")
+	
+	self.StatusPanels = {}
+	
+	for index, script in pairs(file.Find("mingedefense/gamemode/ui/status_panels/*", "LUA") or {}) do
+		print(" ]	 ]	Found status panel " .. script .. " @ " .. index)
+		
+		---[[
+		STATUS_PANEL = {
+			StatusPanel = panel_status,
+			Supplies = supplies
+		}
+		
+		include("mingedefense/gamemode/ui/status_panels/" .. script)
+		
+		local panel_base = STATUS_PANEL.BaseName
+		local panel_name = "MDStatus" .. STATUS_PANEL.Name
+		STATUS_PANEL.BaseName = nil
+		STATUS_PANEL.Name = nil
+		STATUS_PANEL.StatusPanel = nil
+		STATUS_PANEL.Supplies = nil
+		
+		derma.DefineControl(panel_name, "Automatically generated panel for Minge Defense.", STATUS_PANEL, panel_base)
+		table.insert(self.StatusPanels, panel_name)
+		
+		STATUS_PANEL = nil
+		--]]
+	end
+end
+
+hook.Call("HUDStatusLoad", GM)

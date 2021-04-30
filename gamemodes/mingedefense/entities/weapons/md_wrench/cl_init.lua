@@ -3,10 +3,10 @@ include("shared.lua")
 SWEP.Author = "Cryotheum"
 SWEP.Category = "Minge Defense"
 SWEP.DrawAmmo = false
-SWEP.DrawCrosshair = false
-SWEP.Instructions = "Left click to swing wrench and heal buildings, right click to pick up buildings to relocate them."
-SWEP.PrintName = "Wrench"
-SWEP.Purpose = "Hit things."
+SWEP.DrawCrosshair = true
+SWEP.Instructions = "#mingedefense.weapons.wrench.instructions"
+SWEP.PrintName = language.GetPhrase("mingedefense.weapons.wrench")
+SWEP.Purpose = "#mingedefense.weapons.wrench.purpose"
 SWEP.UseHands = true
 SWEP.ViewModelFOV = 54
 
